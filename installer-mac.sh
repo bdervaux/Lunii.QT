@@ -77,7 +77,7 @@ main() {
   say "Traductions françaises et ressources…"
   .venv/bin/pyside6-lrelease locales/fr_FR.ts -qm locales/fr_FR.qm >/dev/null 2>&1 || echo "  (traductions non compilées : l'interface sera en anglais)"
   .venv/bin/pyside6-rcc resources.qrc -o resources_rc.py || fail "Impossible de préparer les ressources."
-  touch .venv/.lunii-ready
+  touch ".venv/.mylunii-ready-$(shasum requirements-launcher.txt | cut -c1-12)"
 
   # 4. Raccourci sur le Bureau
   say "Création du raccourci sur le Bureau…"

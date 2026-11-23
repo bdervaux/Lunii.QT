@@ -1,65 +1,102 @@
 #!/bin/bash
 # MyLunii launcher for macOS.
-# This .app sits next to the MyLunii source folder (lunii-qt.py, pkg/, ...).
-# First launch: prepares a private Python environment (2-5 min, Internet needed).
-# Next launches: opens the application in a few seconds.
+#
+# Two layouts are supported:
+#  - self-contained app (MyLunii-Mac.zip): the program is inside MyLunii.app/Contents/Resources/app,
+#    the private Python environment lives in ~/Library/Application Support/MyLunii;
+#  - source folder (git / installer-mac.sh): MyLunii.app sits next to lunii-qt.py and pkg/.
+#
+# First launch prepares a private Python environment (2-5 min, Internet needed).
+# Next launches open the application in a few seconds.
+#
+#   MyLunii.app/Contents/MacOS/MyLunii --setup   prepares everything and exits (used by the installer)
 
-APP_DIR="$(cd "$(dirname "$0")/../../.." && pwd)"
-cd "$APP_DIR" || exit 1
-VENV="$APP_DIR/.venv"
-READY="$VENV/.lunii-ready"
-LOG="$APP_DIR/.lunii-launcher.log"
+CONTENTS="$(cd "$(dirname "$0")/.." && pwd)"
+if [ -f "$CONTENTS/Resources/app/lunii-qt.py" ]; then
+  SRC="$CONTENTS/Resources/app"
+  DATA="$HOME/Library/Application Support/MyLunii"
+  VENV="$DATA/venv"
+else
+  SRC="$(cd "$CONTENTS/../.." && pwd)"
+  DATA="$SRC"
+  VENV="$SRC/.venv"
+fi
+mkdir -p "$DATA"
+LOG="$DATA/launcher.log"
+SETUP_ONLY=0
+[ "${1:-}" = "--setup" ] && SETUP_ONLY=1
 
 # apps opened from the Finder get a minimal PATH
 export PATH="/Library/Frameworks/Python.framework/Versions/Current/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
 
 dialog() {
-  osascript -e "display dialog \"$1\" with title \"MyLunii\" buttons {\"OK\"} default button 1 with icon ${2:-note}" >/dev/null 2>&1
+  if [ "$SETUP_ONLY" = 1 ]; then
+    printf "%b\n" "$1"
+  else
+    osascript -e "display dialog \"$1\" with title \"MyLunii\" buttons {\"OK\"} default button 1 with icon ${2:-note}" >/dev/null 2>&1
+  fi
 }
 
-if [ ! -f "$APP_DIR/lunii-qt.py" ]; then
-  dialog "Gardez MyLunii.app dans son dossier d'origine (à côté du dossier « pkg »)." caution
+if [ ! -f "$SRC/lunii-qt.py" ]; then
+  dialog "MyLunii est incomplet : retéléchargez-le." caution
   exit 1
 fi
 
-# 1. find Python (3.12 / 3.11 first: the safest with Qt)
-PY=""
-for candidate in python3.12 python3.11 python3.10 python3.13 python3; do
-  path="$(command -v "$candidate" 2>/dev/null)"
-  [ -z "$path" ] && continue
-  # /usr/bin/python3 is only a stub when Apple's developer tools are missing
-  if [ "$path" = "/usr/bin/python3" ] && ! xcode-select -p >/dev/null 2>&1; then
-    continue
-  fi
-  if "$path" -c "import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)" >/dev/null 2>&1; then
-    PY="$path"
-    break
-  fi
-done
+# 1. find Python (3.12 / 3.13 / 3.11 first: the ones Qt supports best)
+PY="${MYLUNII_PYTHON:-}"
 if [ -z "$PY" ]; then
-  open "https://www.python.org/downloads/macos/"
-  dialog "Il manque Python sur ce Mac.\n\nLa page de téléchargement vient de s'ouvrir : installez Python 3.12, puis rouvrez MyLunii." caution
+  for candidate in python3.12 python3.13 python3.11 python3.10 python3; do
+    path="$(command -v "$candidate" 2>/dev/null)"
+    [ -z "$path" ] && continue
+    # /usr/bin/python3 is only a stub when Apple's developer tools are missing
+    if [ "$path" = "/usr/bin/python3" ] && ! xcode-select -p >/dev/null 2>&1; then
+      continue
+    fi
+    if "$path" -c "import sys; sys.exit(0 if (3, 9) <= sys.version_info[:2] <= (3, 13) else 1)" >/dev/null 2>&1; then
+      PY="$path"
+      break
+    fi
+  done
+fi
+if [ -z "$PY" ]; then
+  [ "$SETUP_ONLY" = 0 ] && open "https://www.python.org/downloads/macos/"
+  dialog "Il manque Python sur ce Mac.\n\nLancez « Installer MyLunii » (il s'en occupe), ou installez Python 3.13 depuis python.org puis rouvrez MyLunii." caution
   exit 1
 fi
 
-# 2. first launch: prepare everything
+# 2. prepare the private environment (again when the requirements change)
+REQ="$SRC/requirements-launcher.txt"
+REQ_ID="$(shasum "$REQ" 2>/dev/null | cut -c1-12)"
+READY="$VENV/.mylunii-ready-$REQ_ID"
 if [ ! -f "$READY" ]; then
-  osascript -e 'display notification "Première ouverture : préparation en cours, cela peut prendre quelques minutes…" with title "MyLunii"' >/dev/null 2>&1
+  if [ "$SETUP_ONLY" = 1 ]; then
+    echo "Préparation de MyLunii (2 à 5 minutes la première fois)…"
+  else
+    osascript -e 'display notification "Première ouverture : préparation en cours, cela peut prendre quelques minutes…" with title "MyLunii"' >/dev/null 2>&1
+  fi
   {
-    rm -rf "$VENV"
-    "$PY" -m venv "$VENV" &&
+    if [ ! -x "$VENV/bin/python" ]; then
+      rm -rf "$VENV"
+      "$PY" -m venv "$VENV"
+    fi &&
     "$VENV/bin/python" -m pip install --upgrade pip &&
-    "$VENV/bin/python" -m pip install -r requirements-launcher.txt
+    "$VENV/bin/python" -m pip install -r "$REQ"
   } >"$LOG" 2>&1
   if [ $? -ne 0 ]; then
     dialog "La préparation a échoué. Vérifiez votre connexion Internet et réessayez.\n\nDétails : $LOG" stop
     exit 1
   fi
-  # French translations + application resources
-  "$VENV/bin/pyside6-lrelease" locales/fr_FR.ts -qm locales/fr_FR.qm >>"$LOG" 2>&1
-  "$VENV/bin/pyside6-rcc" resources.qrc -o resources_rc.py >>"$LOG" 2>&1
+  # source-folder layout: compile translations + resources here (the zip ships them compiled)
+  if [ "$SRC" = "$DATA" ]; then
+    "$VENV/bin/pyside6-lrelease" "$SRC/locales/fr_FR.ts" -qm "$SRC/locales/fr_FR.qm" >>"$LOG" 2>&1
+    (cd "$SRC" && "$VENV/bin/pyside6-rcc" resources.qrc -o resources_rc.py) >>"$LOG" 2>&1
+  fi
+  rm -f "$VENV"/.mylunii-ready-* "$VENV"/.lunii-ready
   touch "$READY"
 fi
+[ "$SETUP_ONLY" = 1 ] && { echo "MyLunii est prêt."; exit 0; }
 
-# 3. run
-exec "$VENV/bin/python" lunii-qt.py
+# 3. run (never write inside the app bundle)
+export PYTHONDONTWRITEBYTECODE=1
+cd "$DATA" || exit 1
+exec "$VENV/bin/python" "$SRC/lunii-qt.py"
