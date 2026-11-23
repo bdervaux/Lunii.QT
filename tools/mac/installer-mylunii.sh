@@ -61,7 +61,7 @@ main() {
   DEST_DIR="/Applications"
   [ -w "$DEST_DIR" ] || DEST_DIR="$HOME/Applications"
   mkdir -p "$DEST_DIR"
-  say "Installation de MyLunii dans $DEST_DIR…"
+  say "Installation de MyLunii dans ${DEST_DIR}…"
   pkill -f "MyLunii.app/Contents/Resources/app/lunii-qt.py" 2>/dev/null
   if [ "$HERE/MyLunii.app" != "$DEST_DIR/MyLunii.app" ]; then
     rm -rf "$DEST_DIR/MyLunii.app"
@@ -73,7 +73,7 @@ main() {
   say "Préparation de MyLunii (2 à 5 minutes la première fois)…"
   MYLUNII_PYTHON="$PY" "$DEST_DIR/MyLunii.app/Contents/MacOS/MyLunii" --setup || fail "La préparation a échoué (détails : ~/Library/Application Support/MyLunii/launcher.log)."
 
-  say "C'est prêt ! MyLunii s'ouvre. Vous le retrouverez ensuite dans $DEST_DIR (et le Launchpad)."
+  say "C'est prêt ! MyLunii s'ouvre. Vous le retrouverez ensuite dans ${DEST_DIR} (et le Launchpad)."
   open "$DEST_DIR/MyLunii.app"
 }
 
