@@ -27,6 +27,9 @@ jobs:
       run: |
         pip install -r requirements.txt
         pip install "setuptools<70" py2app
+        # py2app can't handle the "backports" namespace package (from backports-zstd, used by py7zr):
+        # turn it into a regular package
+        python -c "import os, backports; p = list(backports.__path__)[0]; open(os.path.join(p, '__init__.py'), 'a').close(); print('backports ->', p)" || true
         brew install create-dmg
         
     - name: Build Exec
