@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - cx_freeze
+      - nouvelle-interface
     tags:
       - v*.*.*
 

@@ -3,6 +3,8 @@ name: Build for MacOs (on Arm)
 on:
   workflow_dispatch:
   push:
+    branches:
+      - nouvelle-interface
     tags:
       - v*.*.*
 
