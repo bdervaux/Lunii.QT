@@ -52,9 +52,21 @@ def _rounded(pix: QPixmap) -> QPixmap:
 
 def _placeholder(uuid_str: str, title: str) -> QPixmap:
     pix = QPixmap(TILE, TILE)
-    pix.fill(_pastel_for(uuid_str))
+    base = _pastel_for(uuid_str)
+    pix.fill(base)
     p = QPainter(pix)
     p.setRenderHint(QPainter.Antialiasing)
+    # a few soft stars, always at the same place for a given story
+    seed = int(hashlib.md5((uuid_str + "*").encode()).hexdigest(), 16)
+    star = QColor("#FFFFFF")
+    star.setAlpha(150)
+    p.setPen(Qt.NoPen)
+    p.setBrush(star)
+    for i in range(7):
+        x = (seed >> (i * 8)) % (TILE - 16) + 8
+        y = (seed >> (i * 8 + 4)) % (TILE - 16) + 8
+        r = 2 + (seed >> (i * 3)) % 3
+        p.drawEllipse(QRectF(x, y, r, r))
     f = QFont()
     f.setPointSize(34)
     f.setBold(True)
@@ -99,8 +111,9 @@ def _badge(p: QPainter, x: int, y: int, text: str, bg: QColor, fg: QColor):
     return w
 
 
-def decorate(cover: QPixmap, position: int, night: bool, hidden: bool, official: bool,
-             night_label: str, hidden_label: str, perso_label: str) -> QPixmap:
+def decorate(cover: QPixmap, position, night: bool, hidden: bool, official: bool,
+             night_label: str, hidden_label: str, perso_label: str,
+             on_device: bool = False, on_device_label: str = "") -> QPixmap:
     pix = QPixmap(cover)
     p = QPainter(pix)
     p.setRenderHint(QPainter.Antialiasing)
@@ -112,7 +125,8 @@ def decorate(cover: QPixmap, position: int, night: bool, hidden: bool, official:
         p.drawRoundedRect(QRectF(0, 0, TILE, TILE), RADIUS, RADIUS)
 
     # position on the device (order in which the child discovers it)
-    _badge(p, 8, 8, str(position), QColor("#FFFFFF"), INK)
+    if position is not None:
+        _badge(p, 8, 8, str(position), QColor("#FFFFFF"), INK)
     # night mode
     if night:
         _badge(p, TILE - 8 - _badge_width(p, night_label), 8, night_label, INK, QColor("#FFFFFF"))
@@ -122,6 +136,10 @@ def decorate(cover: QPixmap, position: int, night: bool, hidden: bool, official:
     if hidden:
         _badge(p, (TILE - _badge_width(p, hidden_label)) // 2, TILE // 2 - 11, hidden_label,
                QColor("#ECEAFB"), QColor("#3B3760"))
+    # library: already copied on the plugged Lunii
+    if on_device and on_device_label:
+        _badge(p, TILE - 8 - _badge_width(p, on_device_label), TILE - 30, on_device_label,
+               QColor("#1F6B45"), QColor("#FFFFFF"))
     p.end()
     return pix
 
@@ -159,10 +177,13 @@ class LibraryView(QListWidget):
         self._meta = {}     # uuid -> dict(position, night, hidden, official, title)
         self._covers = {}   # uuid -> QPixmap (raw rounded cover, before badges)
         self._labels = ("Nuit", "Masquée", "Perso")
+        self._on_device_label = "✓ Lunii"
         self.itemSelectionChanged.connect(self._emit_selection)
 
-    def set_labels(self, night: str, hidden: str, perso: str):
+    def set_labels(self, night: str, hidden: str, perso: str, on_device: str = None):
         self._labels = (night, hidden, perso)
+        if on_device:
+            self._on_device_label = on_device
 
     # ---------- content ----------
     def populate(self, stories_with_pos, tooltip_fn=None):
@@ -173,8 +194,10 @@ class LibraryView(QListWidget):
         self._meta.clear()
         for position, story in stories_with_pos:
             uuid = story.str_uuid
-            meta = dict(position=position, night=bool(story.night_mode()), hidden=bool(story.hidden),
-                        official=bool(story.is_official()), title=story.name)
+            night = story.night_mode() if callable(getattr(story, "night_mode", None)) else getattr(story, "night_mode", False)
+            meta = dict(position=position, night=bool(night), hidden=bool(story.hidden),
+                        official=bool(story.is_official()), title=story.name,
+                        on_device=bool(getattr(story, "on_device", False)))
             self._meta[uuid] = meta
             item = QListWidgetItem(story.name)
             item.setData(ROLE_UUID, uuid)
@@ -198,7 +221,8 @@ class LibraryView(QListWidget):
     def _refresh_icon(self, uuid: str):
         meta = self._meta[uuid]
         base = self._covers.get(uuid) or _placeholder(uuid, meta["title"])
-        pix = decorate(base, meta["position"], meta["night"], meta["hidden"], meta["official"], *self._labels)
+        pix = decorate(base, meta["position"], meta["night"], meta["hidden"], meta["official"], *self._labels,
+                       on_device=meta.get("on_device", False), on_device_label=self._on_device_label)
         self._items[uuid].setIcon(QIcon(pix))
 
     def has_cover(self, uuid: str) -> bool:

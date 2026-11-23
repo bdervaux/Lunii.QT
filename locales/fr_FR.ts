@@ -1670,6 +1670,186 @@ Voulez-vous continuer ?</translation>
         <source>To arrange your stories, plug in your Lunii first.</source>
         <translation>Pour ranger vos histoires, branchez d'abord votre Lunii.</translation>
     </message>
+    <message>
+        <source>✓ On the Lunii</source>
+        <translation>✓ Sur la Lunii</translation>
+    </message>
+    <message>
+        <source>About Lunii.QT</source>
+        <translation>À propos de Lunii.QT</translation>
+    </message>
+    <message>
+        <source>&lt;h3&gt;Lunii.QT — by {0}&lt;/h3&gt;&lt;p&gt;A simple and friendly way to manage the stories of your Lunii and Flam, and to keep your own library on the computer.&lt;/p&gt;&lt;p&gt;New interface and library by &lt;b&gt;{0}&lt;/b&gt;.&lt;br&gt;Based on &lt;a href='https://github.com/o-daneel/Lunii.QT'&gt;Lunii.QT&lt;/a&gt; by o-daneel (GNU GPL v3).&lt;/p&gt;</source>
+        <translation>&lt;h3&gt;Lunii.QT — par {0}&lt;/h3&gt;&lt;p&gt;Une façon simple et sympa de gérer les histoires de votre Lunii et de votre Flam, et de garder votre propre bibliothèque sur l'ordinateur.&lt;/p&gt;&lt;p&gt;Nouvelle interface et bibliothèque par &lt;b&gt;{0}&lt;/b&gt;.&lt;br&gt;Basé sur &lt;a href='https://github.com/o-daneel/Lunii.QT'&gt;Lunii.QT&lt;/a&gt; d'o-daneel (GNU GPL v3).&lt;/p&gt;</translation>
+    </message>
+    <message>
+        <source>Adding {0} file(s) to your library...</source>
+        <translation>Ajout de {0} fichier(s) à votre bibliothèque…</translation>
+    </message>
+    <message>
+        <source>🛑 Unable to read the library folder</source>
+        <translation>🛑 Impossible de lire le dossier de la bibliothèque</translation>
+    </message>
+    <message>
+        <source>✅ Added to your library: {0}</source>
+        <translation>✅ Ajouté(s) à votre bibliothèque : {0}</translation>
+    </message>
+    <message>
+        <source>These stories are already in your library</source>
+        <translation>Ces histoires sont déjà dans votre bibliothèque</translation>
+    </message>
+    <message>
+        <source>{0} stories kept on this computer, no Lunii needed. Folder: {1}</source>
+        <translation>{0} histoires gardées sur cet ordinateur, sans besoin de Lunii. Dossier : {1}</translation>
+    </message>
+    <message>
+        <source>Already on the plugged-in Lunii</source>
+        <translation>Déjà sur la Lunii branchée</translation>
+    </message>
+    <message>
+        <source>Plug in your Lunii to send these stories to it.</source>
+        <translation>Branchez votre Lunii pour y envoyer ces histoires.</translation>
+    </message>
+    <message>
+        <source>Already on the plugged-in Lunii.</source>
+        <translation>Déjà sur la Lunii branchée.</translation>
+    </message>
+    <message>
+        <source>Please wait, the Lunii is busy.</source>
+        <translation>Patientez, la Lunii est occupée.</translation>
+    </message>
+    <message>
+        <source>Send to the Lunii</source>
+        <translation>Envoyer sur la Lunii</translation>
+    </message>
+    <message>
+        <source>Send {0} stories to the Lunii</source>
+        <translation>Envoyer {0} histoires sur la Lunii</translation>
+    </message>
+    <message>
+        <source>Stories</source>
+        <translation>Histoires</translation>
+    </message>
+    <message>
+        <source>All files</source>
+        <translation>Tous les fichiers</translation>
+    </message>
+    <message>
+        <source>Add to my library</source>
+        <translation>Ajouter à ma bibliothèque</translation>
+    </message>
+    <message>
+        <source>Folder of my library</source>
+        <translation>Dossier de ma bibliothèque</translation>
+    </message>
+    <message>
+        <source>Remove from my library</source>
+        <translation>Retirer de ma bibliothèque</translation>
+    </message>
+    <message>
+        <source>These stories will be moved to the trash of the computer:
+
+{0}
+
+Stories already on the Lunii stay on it.</source>
+        <translation>Ces histoires vont être mises à la corbeille de l'ordinateur :
+
+{0}
+
+Celles déjà sur la Lunii y restent.</translation>
+    </message>
+    <message>
+        <source>🛑 {0} file(s) could not be moved to the trash</source>
+        <translation>🛑 {0} fichier(s) n'ont pas pu être mis à la corbeille</translation>
+    </message>
+    <message>
+        <source>Copying to your library...</source>
+        <translation>Copie dans votre bibliothèque…</translation>
+    </message>
+    <message>
+        <source>Choose a Lunii</source>
+        <translation>Choisir une Lunii</translation>
+    </message>
+    <message>
+        <source>No Lunii plugged in</source>
+        <translation>Aucune Lunii</translation>
+    </message>
+    <message>
+        <source>Also keep a copy in my library</source>
+        <translation>Garder aussi une copie dans ma bibliothèque</translation>
+    </message>
+    <message>
+        <source>Open my library</source>
+        <translation>Ouvrir ma bibliothèque</translation>
+    </message>
+    <message>
+        <source>From my library</source>
+        <translation>Depuis ma bibliothèque</translation>
+    </message>
+    <message>
+        <source>Pick stories you already keep on the computer and send them to the Lunii.</source>
+        <translation>Choisissez des histoires déjà gardées sur l'ordinateur et envoyez-les sur la Lunii.</translation>
+    </message>
+    <message>
+        <source>No Lunii at hand?</source>
+        <translation>Pas de Lunii sous la main ?</translation>
+    </message>
+    <message>
+        <source>Manage my library</source>
+        <translation>Gérer ma bibliothèque</translation>
+    </message>
+    <message>
+        <source>My library</source>
+        <translation>Ma bibliothèque</translation>
+    </message>
+    <message>
+        <source>Open the folder</source>
+        <translation>Ouvrir le dossier</translation>
+    </message>
+    <message>
+        <source>Change folder…</source>
+        <translation>Changer de dossier…</translation>
+    </message>
+    <message>
+        <source>Your library is empty</source>
+        <translation>Votre bibliothèque est vide</translation>
+    </message>
+    <message>
+        <source>Drop story files here (.zip, .7z, .pk), even without a Lunii. They will be ready to send whenever you want.</source>
+        <translation>Glissez ici vos fichiers d'histoires (.zip, .7z, .pk), même sans Lunii. Ils seront prêts à être envoyés quand vous voudrez.</translation>
+    </message>
+    <message>
+        <source>My Lunii</source>
+        <translation>Ma Lunii</translation>
+    </message>
+    <message>
+        <source>by {0}</source>
+        <translation>par {0}</translation>
+    </message>
+    <message>
+        <source>Copy to my library</source>
+        <translation>Copier dans ma bibliothèque</translation>
+    </message>
+    <message>
+        <source>Stories kept on this computer. No Lunii needed to add or manage them.</source>
+        <translation>Les histoires gardées sur cet ordinateur. Pas besoin de Lunii pour les ajouter ou les gérer.</translation>
+    </message>
+    <message>
+        <source>Search my library</source>
+        <translation>Rechercher dans ma bibliothèque</translation>
+    </message>
+    <message>
+        <source>Click a story of your library to see it here.</source>
+        <translation>Cliquez sur une histoire de votre bibliothèque pour la voir ici.</translation>
+    </message>
+    <message>
+        <source>Show in the folder</source>
+        <translation>Afficher dans le dossier</translation>
+    </message>
+    <message>
+        <source>PLUGGED-IN LUNII</source>
+        <translation>LUNII BRANCHÉE</translation>
+    </message>
 </context>
 <context>
     <name>NightModeWindow</name>

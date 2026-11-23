@@ -19,9 +19,9 @@ Layout
 from PySide6.QtCore import Qt, QSize, QObject, QEvent, QByteArray, QCoreApplication, QRectF, Signal
 from PySide6.QtGui import QIcon, QPixmap, QPainter, QColor, QFont, QFontDatabase
 from PySide6.QtSvg import QSvgRenderer
-from PySide6.QtWidgets import (QAbstractButton, QButtonGroup, QFrame, QGridLayout, QHBoxLayout, QLabel,
-                               QLineEdit, QListWidget, QAbstractItemView, QProgressBar, QPushButton,
-                               QStackedWidget, QVBoxLayout, QWidget, QScrollArea)
+from PySide6.QtWidgets import (QAbstractButton, QButtonGroup, QCheckBox, QFrame, QGraphicsDropShadowEffect,
+                               QGridLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget, QAbstractItemView,
+                               QProgressBar, QPushButton, QStackedWidget, QVBoxLayout, QWidget, QScrollArea)
 
 from pkg.ui.main_ui import Ui_MainWindow as _ClassicUi
 from pkg.ui.theme import STYLESHEET, ACCENT
@@ -55,6 +55,10 @@ _SVG = {
     "info": '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
     "usb": '<path d="M9 2v5M15 2v5M7 7h10v4a5 5 0 0 1-10 0zM12 16v6"/>',
     "moon": '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+    "shelf": '<path d="M4 4h3v16H4zM9 4h3v16H9z"/><path d="M14.5 5.2l2.9-.8 3.6 14.6-2.9.8z"/>',
+    "lunii": '<rect x="6" y="3" width="12" height="18" rx="4"/><circle cx="12" cy="10" r="3"/><path d="M9.5 17h5"/>',
+    "send": '<path d="M4 12l16-8-6 16-2.5-6.5z"/><path d="M11.5 13.5L20 4"/>',
+    "reveal": '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 10v6M9 13l3 3 3-3"/>',
     "eyeoff": ('<path d="M3 3l18 18"/><path d="M10.6 6.1A9.8 9.8 0 0 1 12 6c6 0 9.5 6 9.5 6a17 17 0 0 1-3 3.6'
                'M6.6 6.6A17 17 0 0 0 2.5 12S6 18 12 18a9.6 9.6 0 0 0 5.4-1.6"/>'),
 }
@@ -75,6 +79,88 @@ def svg_icon(name: str, color: str = "#3B3760", size: int = 22, stroke: float = 
         pix.setDevicePixelRatio(scale)
         icon.addPixmap(pix)
     return icon
+
+
+# --------------------------------------------------------------------------- illustrations
+SIGNATURE = "dervø"
+
+# friendly crescent moon on an indigo tile (app logo)
+LOGO_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<rect width="64" height="64" rx="16" fill="#4C3FD1"/>
+<circle cx="29" cy="35" r="19" fill="#FFD98A"/>
+<circle cx="39" cy="26" r="16" fill="#4C3FD1"/>
+<path d="M17 37 q3.5 3 7 0" stroke="#1E1B3A" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+<circle cx="18" cy="43.5" r="2.6" fill="#F7B7A3"/>
+<path d="M49 13 l1.4 3.2 3.4.4 -2.6 2.3.8 3.4 -3-1.8 -3 1.8.8-3.4 -2.6-2.3 3.4-.4z" fill="#FFFFFF"/>
+<circle cx="52" cy="35" r="1.8" fill="#FFFFFF" opacity=".85"/>
+<circle cx="44" cy="47" r="1.3" fill="#FFFFFF" opacity=".7"/>
+</svg>"""
+
+# smiling Lunii-like box plugged into a laptop, under the stars
+PLUG_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 200">
+<ellipse cx="180" cy="178" rx="150" ry="14" fill="#ECEAFB"/>
+<path d="M30 40 l2 5 5 .6 -3.8 3.4 1.1 5 -4.3-2.6 -4.3 2.6 1.1-5 -3.8-3.4 5-.6z" fill="#FFD98A"/>
+<path d="M318 26 l1.6 4 4 .5 -3 2.7.9 4 -3.5-2.1 -3.5 2.1.9-4 -3-2.7 4-.5z" fill="#B8B1E8"/>
+<circle cx="70" cy="22" r="3" fill="#B8B1E8"/><circle cx="290" cy="70" r="2.5" fill="#FFD98A"/>
+<circle cx="160" cy="18" r="2" fill="#CFC6F5"/>
+<rect x="44" y="56" width="92" height="112" rx="28" fill="#FFD98A" stroke="#1E1B3A" stroke-width="4"/>
+<circle cx="90" cy="98" r="24" fill="#FFFFFF" stroke="#1E1B3A" stroke-width="4"/>
+<path d="M80 96 q4 4 8 0 M92 96 q4 4 8 0" stroke="#1E1B3A" stroke-width="3" fill="none" stroke-linecap="round"/>
+<path d="M83 106 q7 7 14 0" stroke="#1E1B3A" stroke-width="3" fill="none" stroke-linecap="round"/>
+<circle cx="76" cy="105" r="3.5" fill="#F7B7A3"/><circle cx="104" cy="105" r="3.5" fill="#F7B7A3"/>
+<rect x="70" y="140" width="40" height="6" rx="3" fill="#1E1B3A"/>
+<path d="M136 120 C170 120 170 150 205 150" stroke="#4C3FD1" stroke-width="5" fill="none" stroke-dasharray="2 10" stroke-linecap="round"/>
+<rect x="205" y="72" width="120" height="80" rx="10" fill="#FFFFFF" stroke="#1E1B3A" stroke-width="4"/>
+<rect x="217" y="84" width="96" height="56" rx="5" fill="#ECEAFB"/>
+<path d="M250 112 l9 9 17-19" stroke="#4C3FD1" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M190 152 h150 l-12 14 h-126z" fill="#CFC6F5" stroke="#1E1B3A" stroke-width="4" stroke-linejoin="round"/>
+</svg>"""
+
+# a pile of books with a sleepy moon (empty library)
+SHELF_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 170">
+<ellipse cx="120" cy="156" rx="100" ry="10" fill="#ECEAFB"/>
+<rect x="40" y="118" width="150" height="30" rx="8" fill="#A8D8F0" stroke="#1E1B3A" stroke-width="3.5"/>
+<rect x="56" y="88" width="130" height="30" rx="8" fill="#F7B7A3" stroke="#1E1B3A" stroke-width="3.5"/>
+<rect x="46" y="58" width="120" height="30" rx="8" fill="#B9E4C9" stroke="#1E1B3A" stroke-width="3.5"/>
+<path d="M60 133 h70 M74 103 h60 M64 73 h50" stroke="#1E1B3A" stroke-width="3" stroke-linecap="round" opacity=".5"/>
+<circle cx="190" cy="44" r="22" fill="#FFD98A"/><circle cx="200" cy="36" r="18" fill="#F6F5FB"/>
+<path d="M176 46 q3 3 6 0" stroke="#1E1B3A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+<path d="M120 20 l1.6 4 4 .5 -3 2.7.9 4 -3.5-2.1 -3.5 2.1.9-4 -3-2.7 4-.5z" fill="#B8B1E8"/>
+<circle cx="150" cy="16" r="2.5" fill="#CFC6F5"/>
+</svg>"""
+
+
+def svg_pixmap(svg: str, width: int, height: int) -> QPixmap:
+    renderer = QSvgRenderer(QByteArray(svg.encode("utf-8")))
+    pix = QPixmap(width * 2, height * 2)
+    pix.fill(Qt.transparent)
+    painter = QPainter(pix)
+    painter.setRenderHint(QPainter.Antialiasing)
+    renderer.render(painter)
+    painter.end()
+    pix.setDevicePixelRatio(2)
+    return pix
+
+
+def logo_icon() -> QIcon:
+    return QIcon(svg_pixmap(LOGO_SVG, 256, 256))
+
+
+def _shadow(widget: QWidget, blur: int = 28, alpha: int = 28, dy: int = 6):
+    effect = QGraphicsDropShadowEffect(widget)
+    effect.setBlurRadius(blur)
+    effect.setOffset(0, dy)
+    effect.setColor(QColor(30, 27, 58, alpha))
+    widget.setGraphicsEffect(effect)
+
+
+def _centered(widget: QWidget) -> QHBoxLayout:
+    """Centers a fixed-width widget without breaking word-wrapped labels inside it."""
+    row = QHBoxLayout()
+    row.addStretch(1)
+    row.addWidget(widget)
+    row.addStretch(1)
+    return row
 
 
 # --------------------------------------------------------------------------- small widgets
@@ -318,6 +404,7 @@ class Ui_ModernWindow(_ClassicUi):
         root.addWidget(right, 1)
 
         self.page_stories = self._build_stories_page(classic)
+        self.page_library = self._build_library_page()
         self.page_add = self._build_add_page()
         self.page_order = self._build_order_page()
         self.page_repair = self._build_repair_page()
@@ -327,6 +414,7 @@ class Ui_ModernWindow(_ClassicUi):
             "add": self.page_add,
             "order": self.page_order,
             "repair": self.page_repair,
+            "library": self.page_library,
             "connect": self.page_connect,
         }
         for page in self.pages_by_name.values():
@@ -338,6 +426,7 @@ class Ui_ModernWindow(_ClassicUi):
         MainWindow.resize(1200, 800)
         MainWindow.setMinimumSize(QSize(940, 620))
         MainWindow.setStyleSheet(STYLESHEET)
+        MainWindow.setWindowIcon(logo_icon())
 
         # friendliest font available on this computer
         families = set(QFontDatabase.families())
@@ -350,17 +439,22 @@ class Ui_ModernWindow(_ClassicUi):
     def _build_sidebar(self):
         side = QFrame()
         side.setObjectName("sidebar")
-        side.setFixedWidth(236)
+        side.setFixedWidth(248)
         lay = QVBoxLayout(side)
         lay.setContentsMargins(16, 22, 16, 16)
         lay.setSpacing(4)
 
         brand = QHBoxLayout()
-        brand.setSpacing(10)
+        brand.setSpacing(12)
         logo = QLabel()
-        logo.setPixmap(QIcon(":/icon/res/logo.png").pixmap(38, 38))
+        logo.setPixmap(svg_pixmap(LOGO_SVG, 44, 44))
         brand.addWidget(logo)
-        brand.addWidget(_label("Lunii.QT", "brand"))
+        names = QVBoxLayout()
+        names.setSpacing(0)
+        names.addWidget(_label("Lunii.QT", "brand"))
+        self.lbl_signature = _label("", "signature")
+        names.addWidget(self.lbl_signature)
+        brand.addLayout(names)
         brand.addStretch(1)
         lay.addLayout(brand)
         lay.addSpacing(22)
@@ -380,7 +474,8 @@ class Ui_ModernWindow(_ClassicUi):
             lay.addWidget(btn)
             return btn
 
-        self.nav_stories = nav("book", "")
+        self.nav_stories = nav("lunii", "")
+        self.nav_library = nav("shelf", "")
         self.nav_add = nav("plus", "")
         self.nav_order = nav("list", "")
         self.nav_repair = nav("kit", "")
@@ -552,6 +647,7 @@ class Ui_ModernWindow(_ClassicUi):
         self.btn_nightmode.setCursor(Qt.PointingHandCursor)
         lay.addWidget(self.btn_nightmode, 0, Qt.AlignVCenter)
         self.device_card = card
+        _shadow(card, 24, 18, 4)
         return card
 
     def _build_side_panel(self):
@@ -605,6 +701,8 @@ class Ui_ModernWindow(_ClassicUi):
 
         self.btn_panel_export = _button("", "secondary", "download")
         st.addWidget(self.btn_panel_export)
+        self.btn_panel_to_library = _button("", "secondary", "shelf")
+        st.addWidget(self.btn_panel_to_library)
         self.panel_export_note = QFrame()
         self.panel_export_note.setObjectName("note")
         note_lay = QHBoxLayout(self.panel_export_note)
@@ -617,6 +715,7 @@ class Ui_ModernWindow(_ClassicUi):
         st.addStretch(1)
         lay.addWidget(self.panel_story, 1)
         self.panel_story.setVisible(False)
+        _shadow(panel, 30, 22, 6)
         return panel
 
     def _build_add_page(self):
@@ -626,8 +725,18 @@ class Ui_ModernWindow(_ClassicUi):
         row = QHBoxLayout()
         self.btn_choose_files = _button(QCoreApplication.translate("MainWindow", "Choose files…"), "primary", "folder", "#FFFFFF")
         row.addWidget(self.btn_choose_files)
+        row.addSpacing(16)
+        self.chk_keep_copy = QCheckBox(QCoreApplication.translate("MainWindow", "Also keep a copy in my library"))
+        self.chk_keep_copy.setChecked(True)
+        self.chk_keep_copy.setCursor(Qt.PointingHandCursor)
+        row.addWidget(self.chk_keep_copy)
         row.addStretch(1)
         lay.addLayout(row)
+
+        self.btn_add_from_library = _button(QCoreApplication.translate("MainWindow", "Open my library"), "secondary", "shelf")
+        lay.addWidget(_action_card("shelf", QCoreApplication.translate("MainWindow", "From my library"),
+                                   QCoreApplication.translate("MainWindow", "Pick stories you already keep on the computer and send them to the Lunii."),
+                                   self.btn_add_from_library))
 
         self.btn_ffmpeg = _button(QCoreApplication.translate("MainWindow", "Install"), "secondary", "download")
         self.lbl_ffmpeg_state = _label("", "muted", wrap=True)
@@ -734,12 +843,12 @@ class Ui_ModernWindow(_ClassicUi):
         reason_lay.addWidget(reason_ico)
         self.lbl_connect_reason = _label("", "warn", wrap=True)
         reason_lay.addWidget(self.lbl_connect_reason, 1)
-        self.connect_reason.setMaximumWidth(640)
+        self.connect_reason.setFixedWidth(560)
         self.connect_reason.setVisible(False)
-        lay.addWidget(self.connect_reason, 0, Qt.AlignHCenter)
+        lay.addLayout(_centered(self.connect_reason))
 
         art = QLabel()
-        art.setPixmap(QIcon(":/icon/res/logo.png").pixmap(150, 150))
+        art.setPixmap(svg_pixmap(PLUG_SVG, 360, 200))
         art.setAlignment(Qt.AlignCenter)
         lay.addWidget(art)
 
@@ -748,7 +857,15 @@ class Ui_ModernWindow(_ClassicUi):
         lay.addWidget(title)
         sub = _label(QCoreApplication.translate("MainWindow", "Lunii.QT finds it on its own a few seconds after it is plugged in. It also works with the Flam."), "muted", wrap=True)
         sub.setAlignment(Qt.AlignCenter)
-        lay.addWidget(sub)
+        sub.setFixedWidth(560)
+        lay.addLayout(_centered(sub))
+        lib_row = QHBoxLayout()
+        lib_row.addStretch(1)
+        lib_row.addWidget(_label(QCoreApplication.translate("MainWindow", "No Lunii at hand?"), "small"))
+        self.btn_connect_library = _button(QCoreApplication.translate("MainWindow", "Manage my library"), "link")
+        self.btn_connect_library.setMinimumHeight(0)
+        lib_row.addWidget(self.btn_connect_library)
+        lib_row.addStretch(1)
 
         steps = QHBoxLayout()
         steps.setSpacing(16)
@@ -758,6 +875,7 @@ class Ui_ModernWindow(_ClassicUi):
                 (QCoreApplication.translate("MainWindow", "Wait a moment"), QCoreApplication.translate("MainWindow", "Your stories show up within a few seconds."))), start=1):
             card = QFrame()
             card.setObjectName("card")
+            card.setFixedSize(236, 168)
             c = QVBoxLayout(card)
             c.setContentsMargins(20, 18, 20, 18)
             c.setSpacing(8)
@@ -765,12 +883,17 @@ class Ui_ModernWindow(_ClassicUi):
             num.setAlignment(Qt.AlignCenter)
             c.addWidget(num)
             c.addWidget(_label(head, "h3"))
-            c.addWidget(_label(text, "muted", wrap=True))
+            body = _label(text, "muted", wrap=True)
+            body.setFixedWidth(196)
+            c.addWidget(body)
+            c.addStretch(1)
+            _shadow(card, 24, 16, 4)
             steps.addWidget(card)
         steps_box = QWidget()
-        steps_box.setMaximumWidth(900)
+        steps_box.setFixedWidth(3 * 236 + 2 * 16)
         steps_box.setLayout(steps)
-        lay.addWidget(steps_box, 0, Qt.AlignHCenter)
+        steps.setContentsMargins(0, 0, 0, 0)
+        lay.addLayout(_centered(steps_box))
 
         btns = QHBoxLayout()
         btns.addStretch(1)
@@ -788,17 +911,142 @@ class Ui_ModernWindow(_ClassicUi):
         hint_row.addWidget(self.btn_connect_open)
         hint_row.addStretch(1)
         lay.addLayout(hint_row)
+        lay.addLayout(lib_row)
         lay.addStretch(2)
+        return page
+
+    def _build_library_page(self):
+        page = QWidget()
+        page.setObjectName("page")
+        h = QHBoxLayout(page)
+        h.setContentsMargins(36, 28, 28, 20)
+        h.setSpacing(24)
+
+        col = QVBoxLayout()
+        col.setSpacing(16)
+        header = QHBoxLayout()
+        titles = QVBoxLayout()
+        titles.setSpacing(4)
+        titles.addWidget(_label(QCoreApplication.translate("MainWindow", "My library"), "h1"))
+        self.lbl_library_sub = _label("", "muted", wrap=True)
+        titles.addWidget(self.lbl_library_sub)
+        header.addLayout(titles, 1)
+        self.btn_library_add = _button(QCoreApplication.translate("MainWindow", "Add to my library"), "primary", "add")
+        self.btn_library_add.setMinimumHeight(46)
+        header.addWidget(self.btn_library_add, 0, Qt.AlignVCenter)
+        col.addLayout(header)
+
+        tools = QHBoxLayout()
+        tools.setSpacing(10)
+        self.le_library_filter = QLineEdit()
+        self.le_library_filter.setObjectName("le_filter")
+        self.le_library_filter.setMinimumHeight(40)
+        self.le_library_filter.setClearButtonEnabled(True)
+        self.le_library_filter.addAction(svg_icon("search", "#5E5A7A", 18), QLineEdit.ActionPosition.LeadingPosition)
+        tools.addWidget(self.le_library_filter, 1)
+        self.btn_library_folder = _button(QCoreApplication.translate("MainWindow", "Open the folder"), "secondary", "folder")
+        tools.addWidget(self.btn_library_folder)
+        self.btn_library_change = _button(QCoreApplication.translate("MainWindow", "Change folder…"), "link")
+        self.btn_library_change.setMinimumHeight(0)
+        tools.addWidget(self.btn_library_change)
+        col.addLayout(tools)
+
+        self.library_stack = QStackedWidget()
+        # empty library
+        empty = QWidget()
+        empty.setObjectName("page")
+        e = QVBoxLayout(empty)
+        e.setSpacing(14)
+        e.addStretch(1)
+        art = QLabel()
+        art.setPixmap(svg_pixmap(SHELF_SVG, 240, 170))
+        art.setAlignment(Qt.AlignCenter)
+        e.addWidget(art)
+        t = _label(QCoreApplication.translate("MainWindow", "Your library is empty"), "h2")
+        t.setAlignment(Qt.AlignCenter)
+        e.addWidget(t)
+        sub = _label(QCoreApplication.translate("MainWindow", "Drop story files here (.zip, .7z, .pk), even without a Lunii. They will be ready to send whenever you want."), "muted", wrap=True)
+        sub.setAlignment(Qt.AlignCenter)
+        sub.setFixedWidth(520)
+        e.addLayout(_centered(sub))
+        e.addStretch(2)
+        self.library_empty = empty
+        self.library_stack.addWidget(empty)
+        col.addWidget(self.library_stack, 1)
+        h.addLayout(col, 1)
+
+        # side panel
+        panel = QFrame()
+        panel.setObjectName("panel")
+        panel.setFixedWidth(330)
+        lay = QVBoxLayout(panel)
+        lay.setContentsMargins(22, 22, 22, 22)
+        lay.setSpacing(10)
+        self.library_panel_empty = QWidget()
+        pe = QVBoxLayout(self.library_panel_empty)
+        pe.setContentsMargins(0, 40, 0, 0)
+        ico = QLabel()
+        ico.setPixmap(svg_icon("shelf", "#B8B1E8", 56, 1.6).pixmap(56, 56))
+        ico.setAlignment(Qt.AlignCenter)
+        pe.addWidget(ico)
+        self.lbl_library_panel_empty = _label("", "muted", wrap=True)
+        self.lbl_library_panel_empty.setAlignment(Qt.AlignCenter)
+        pe.addWidget(self.lbl_library_panel_empty)
+        pe.addStretch(1)
+        lay.addWidget(self.library_panel_empty, 1)
+
+        self.library_panel_story = QWidget()
+        ps = QVBoxLayout(self.library_panel_story)
+        ps.setContentsMargins(0, 0, 0, 0)
+        ps.setSpacing(10)
+        self.lbl_library_cover = QLabel()
+        self.lbl_library_cover.setObjectName("lbl_picture")
+        self.lbl_library_cover.setFixedSize(QSize(284, 220))
+        self.lbl_library_cover.setAlignment(Qt.AlignCenter)
+        ps.addWidget(self.lbl_library_cover, 0, Qt.AlignHCenter)
+        self.lbl_library_title = _label("", "h2", wrap=True)
+        self.lbl_library_meta = _label("", "muted", wrap=True)
+        self.lbl_library_desc = _label("", "small", wrap=True)
+        self.lbl_library_desc.setMaximumHeight(90)
+        ps.addWidget(self.lbl_library_title)
+        ps.addWidget(self.lbl_library_meta)
+        ps.addWidget(self.lbl_library_desc)
+        self.btn_library_send = _button("", "primary", "send", "#FFFFFF")
+        ps.addWidget(self.btn_library_send)
+        self.library_send_note = QFrame()
+        self.library_send_note.setObjectName("note")
+        nl = QHBoxLayout(self.library_send_note)
+        nl.setContentsMargins(12, 10, 12, 10)
+        self.lbl_library_send_note = _label("", "small", wrap=True)
+        nl.addWidget(self.lbl_library_send_note)
+        ps.addWidget(self.library_send_note)
+        self.btn_library_reveal = _button("", "secondary", "reveal")
+        ps.addWidget(self.btn_library_reveal)
+        self.btn_library_remove = _button("", "danger", "trash")
+        ps.addWidget(self.btn_library_remove)
+        ps.addStretch(1)
+        lay.addWidget(self.library_panel_story, 1)
+        self.library_panel_story.setVisible(False)
+        _shadow(panel, 30, 22, 6)
+        h.addWidget(panel)
         return page
 
     # ------------------------------------------------------------------ texts
     def _retranslate_modern(self):
-        self.nav_stories.setText(QCoreApplication.translate("MainWindow", "My stories"))
+        self.nav_stories.setText(QCoreApplication.translate("MainWindow", "My Lunii"))
+        self.nav_library.setText(QCoreApplication.translate("MainWindow", "My library"))
+        self.lbl_signature.setText(QCoreApplication.translate("MainWindow", "by {0}").format(SIGNATURE))
+        self.btn_panel_to_library.setText(QCoreApplication.translate("MainWindow", "Copy to my library"))
+        self.lbl_library_sub.setText(QCoreApplication.translate("MainWindow", "Stories kept on this computer. No Lunii needed to add or manage them."))
+        self.le_library_filter.setPlaceholderText(QCoreApplication.translate("MainWindow", "Search my library"))
+        self.lbl_library_panel_empty.setText(QCoreApplication.translate("MainWindow", "Click a story of your library to see it here."))
+        self.btn_library_reveal.setText(QCoreApplication.translate("MainWindow", "Show in the folder"))
+        self.btn_library_remove.setText(QCoreApplication.translate("MainWindow", "Remove from my library"))
         self.nav_add.setText(QCoreApplication.translate("MainWindow", "Add"))
         self.nav_order.setText(QCoreApplication.translate("MainWindow", "Arrange"))
         self.nav_repair.setText(QCoreApplication.translate("MainWindow", "Repair and tools"))
         self.nav_about.setText(QCoreApplication.translate("MainWindow", "About"))
-        self.lbl_side_device.setText(QCoreApplication.translate("MainWindow", "MY LUNII"))
+        self.lbl_side_device.setText(QCoreApplication.translate("MainWindow", "PLUGGED-IN LUNII"))
         self.btn_refresh.setToolTip(QCoreApplication.translate("MainWindow", "Look for plugged-in Lunii again"))
 
         self.lbl_stories_title.setText(QCoreApplication.translate("MainWindow", "My stories"))

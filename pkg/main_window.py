@@ -11,6 +11,9 @@ from PySide6.QtGui import QFont, QShortcut, QKeySequence, QPixmap, Qt, QDesktopS
 from PySide6.QtWidgets import QMainWindow, QTreeWidgetItem, QFileDialog, QMessageBox, QLabel, QFrame, QHeaderView, \
     QDialog, QApplication, QCheckBox
 from PySide6.QtWidgets import QToolButton, QListWidgetItem
+from PySide6.QtCore import QSettings, QThread, Signal as QtSignal
+import platform
+import subprocess
 
 from pkg import versionWorker
 from pkg.api import constants
@@ -30,6 +33,29 @@ from pkg.ui.login_ui import LoginDialog
 from pkg.ui.modern_ui import Ui_ModernWindow as Ui_MainWindow
 from pkg.api.covers import CoverFetcher
 from pkg.library_view import LibraryView, ROLE_UUID
+from pkg.api.library import Library, DEFAULT_LIBRARY_DIR, is_supported
+from pkg.ui.modern_ui import SIGNATURE, logo_icon
+
+
+class LibraryScanWorker(QThread):
+    """Reads the library folder in the background (archives can be big, covers may be downloaded)."""
+    scanned = QtSignal(object)
+
+    def __init__(self, library, to_add=None, parent=None):
+        super().__init__(parent)
+        self.library = library
+        self.to_add = to_add or []
+        self.added = []
+
+    def run(self):
+        try:
+            if self.to_add:
+                self.added = self.library.add_files(self.to_add)
+            entries = self.library.scan()
+        except Exception as e:
+            entries = None
+            self.error = e
+        self.scanned.emit(entries)
 
 COL_NAME = 0
 COL_NM = 1
@@ -82,6 +108,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.sizes_hidden = True
         self.details_hidden = False
         self.details_last_uuid = None
+        # local library
+        self.settings = QSettings("o-daneel", "Lunii.QT")
+        self.library = Library(self.settings.value("library/folder", DEFAULT_LIBRARY_DIR))
+        self.library_workers = set()
+        self.library_entries = []
         # navigation
         self._showing_page = False
         self._wanted_page = None
@@ -126,7 +157,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     # update ui elements state (enable, disable, context enu)
     def modify_widgets(self):
-        title = f"Lunii Qt-Manager {APP_VERSION}"
+        title = f"Lunii.QT {APP_VERSION} — {self.tr('by {0}').format(SIGNATURE)}"
         self.setWindowTitle(title)
         self.logger.log(logging.INFO, title)
 
@@ -212,6 +243,21 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.le_filter.setPlaceholderText(self.tr("Search a story"))
         self.apply_view_mode()
 
+        # library cover wall
+        self.library_grid = LibraryView(self.page_library)
+        self.library_grid.set_labels(self.tr("Night"), self.tr("Hidden"), self.tr("Custom"), self.tr("✓ On the Lunii"))
+        self.library_stack.addWidget(self.library_grid)
+        self.library_stack.setCurrentWidget(self.library_empty)
+        self.library_update_panel()
+        self.library_rescan()
+        self.setWindowIcon(logo_icon())
+
+        # the status bar keeps only messages (device details are on the device card)
+        for child in self.statusBar().children():
+            if isinstance(child, VLine) or child in (self.lbl_hsnu, self.lbl_snu, self.lbl_version,
+                                                     self.lbl_hfs, self.lbl_fs, self.lbl_count):
+                child.setVisible(False)
+
         # story selection is shown in the side panel, nothing selected yet
         self.update_side_panel([])
         self.update_ffmpeg_state()
@@ -267,11 +313,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         # navigation
         # toggled also fires for keyboard / VoiceOver activation, clicked for a click on the current entry
-        for nav_btn, page_name in ((self.nav_stories, "stories"), (self.nav_add, "add"),
-                                   (self.nav_order, "order"), (self.nav_repair, "repair")):
+        for nav_btn, page_name in ((self.nav_stories, "stories"), (self.nav_library, "library"),
+                                   (self.nav_add, "add"), (self.nav_order, "order"), (self.nav_repair, "repair")):
             nav_btn.toggled.connect(lambda on, n=page_name: on and self.show_page(n))
             nav_btn.clicked.connect(lambda _=False, n=page_name: self.show_page(n))
-        self.nav_about.clicked.connect(lambda: about_dlg(self))
+        self.nav_about.clicked.connect(self.cb_about)
         self.btn_add_stories.clicked.connect(lambda: self.show_page("add"))
 
         # side panel (acts on the selected stories, like the Stories menu)
@@ -309,6 +355,24 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.btn_get_fw.clicked.connect(lambda: self.cb_menu_tools(self.actionGet_firmware))
         self.btn_show_log.clicked.connect(lambda: self.cb_menu_tools(self.actionShow_Log))
 
+        # library page
+        self.btn_library_add.clicked.connect(self.library_choose_files)
+        self.btn_library_folder.clicked.connect(lambda: self.reveal_in_file_manager(self.library.folder, select=False))
+        self.btn_library_change.clicked.connect(self.library_change_folder)
+        self.le_library_filter.textChanged.connect(lambda _: self.library_refresh_view())
+        self.library_grid.signal_selection.connect(lambda _: self.library_update_panel())
+        self.library_grid.viewport().installEventFilter(self)
+        self.library_empty.setAcceptDrops(True)
+        self.library_empty.installEventFilter(self)
+        self.btn_library_send.clicked.connect(self.library_send_selected)
+        self.btn_library_reveal.clicked.connect(self.library_reveal_selected)
+        self.btn_library_remove.clicked.connect(self.library_remove_selected)
+        self.btn_add_from_library.clicked.connect(lambda: self.show_page("library"))
+        self.btn_panel_to_library.clicked.connect(self.ts_export_to_library)
+        self.btn_connect_library.clicked.connect(lambda: self.show_page("library"))
+        self.chk_keep_copy.setChecked(self.settings.value("library/keep_copy", True, type=bool))
+        self.chk_keep_copy.toggled.connect(lambda on: self.settings.setValue("library/keep_copy", on))
+
         # "plug your Lunii" page
         self.btn_connect_retry.clicked.connect(self.cb_device_refresh)
         self.btn_connect_open.clicked.connect(lambda: self.cb_menu_file(self.actionOpen_Lunii))
@@ -330,6 +394,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     # TREE WIDGET MANAGEMENT
     def eventFilter(self, obj, event):
+        if obj is self.library_grid.viewport() or obj is self.library_empty:
+            if event.type() in (QtCore.QEvent.DragEnter, QtCore.QEvent.DragMove):
+                if event.mimeData().hasUrls() and any(is_supported(u.toLocalFile()) for u in event.mimeData().urls()):
+                    event.acceptProposedAction()
+                else:
+                    event.ignore()
+                return True
+            elif event.type() == QtCore.QEvent.Drop:
+                files = [u.toLocalFile() for u in event.mimeData().urls() if is_supported(u.toLocalFile())]
+                if files:
+                    event.acceptProposedAction()
+                    self.library_rescan(to_add=files)
+                return True
+            return False
         if obj is self.library_view.viewport():
             if event.type() in (QtCore.QEvent.DragEnter, QtCore.QEvent.DragMove):
                 self.ts_dragenter_action(event)
@@ -434,6 +512,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         for fetcher in list(self.cover_fetchers):
             fetcher.abort()
             fetcher.wait()
+        for worker in list(self.library_workers):
+            worker.wait(3000)
 
         event.accept()
 
@@ -496,7 +576,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.pages.setCurrentWidget(self.pages_by_name[target])
             # keep the entry the user picked highlighted
             nav = {"stories": self.nav_stories, "connect": self.nav_stories, "add": self.nav_add,
-                   "order": self.nav_order, "repair": self.nav_repair}[name]
+                   "order": self.nav_order, "repair": self.nav_repair, "library": self.nav_library}[name]
             nav.setChecked(True)
         finally:
             self._showing_page = False
@@ -580,8 +660,219 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             row.switch.setEnabled(action.isEnabled())
 
         self.btn_panel_export.setEnabled(self.act_export.isEnabled())
+        self.btn_panel_to_library.setEnabled(self.act_export.isEnabled())
         self.panel_export_note.setVisible(not self.act_export.isEnabled() and any(s.is_official() for s in stories))
         self.btn_panel_remove.setEnabled(self.act_remove.isEnabled())
+
+    # LOCAL LIBRARY
+    def cb_about(self):
+        QMessageBox.about(
+            self, self.tr("About Lunii.QT"),
+            self.tr("<h3>Lunii.QT — by {0}</h3>"
+                    "<p>A simple and friendly way to manage the stories of your Lunii and Flam, "
+                    "and to keep your own library on the computer.</p>"
+                    "<p>New interface and library by <b>{0}</b>.<br>"
+                    "Based on <a href='https://github.com/o-daneel/Lunii.QT'>Lunii.QT</a> by o-daneel "
+                    "(GNU GPL v3).</p>").format(SIGNATURE) + f"<p style='color:#5E5A7A'>{APP_VERSION}</p>")
+
+    def library_rescan(self, to_add=None):
+        worker = LibraryScanWorker(self.library, to_add, self)
+        # bound methods: the slots run in the GUI thread (queued from the worker thread)
+        worker.scanned.connect(self.library_scanned)
+        worker.finished.connect(self.library_worker_done)
+        self.library_workers.add(worker)
+        if to_add:
+            self.statusbar.showMessage(self.tr("Adding {0} file(s) to your library...").format(len(to_add)))
+        worker.start()
+
+    def library_worker_done(self):
+        worker = self.sender()
+        self.library_workers.discard(worker)
+        if worker is not None:
+            worker.deleteLater()
+
+    def library_scanned(self, entries):
+        worker = self.sender()
+        if entries is None:
+            self.statusbar.showMessage(self.tr("🛑 Unable to read the library folder"))
+            return
+        if worker is not None and getattr(worker, "to_add", None):
+            count = len(worker.added)
+            if count:
+                self.statusbar.showMessage(self.tr("✅ Added to your library: {0}").format(count))
+            else:
+                self.statusbar.showMessage(self.tr("These stories are already in your library"))
+        self.library_entries = entries
+        self.library_apply_device_flags()
+
+    def library_apply_device_flags(self):
+        on_device = set()
+        if self.audio_device and self.audio_device.stories:
+            on_device = {story.str_uuid for story in self.audio_device.stories}
+        for entry in self.library_entries:
+            entry.on_device = bool(entry.uuid and entry.uuid in on_device)
+        self.library_refresh_view()
+
+    def library_refresh_view(self):
+        if not hasattr(self, "library_grid"):
+            return
+        selected = self.library_grid.selected_uuids()
+        text = self.le_library_filter.text().strip().lower()
+        shown = [e for e in self.library_entries
+                 if not text or text in e.title.lower() or text in os.path.basename(e.path).lower()]
+        self.library_grid.populate([(None, e) for e in shown], self.library_tooltip)
+        for entry in shown:
+            data = entry.cover_bytes()
+            if data:
+                self.library_grid.set_cover(entry.key, data)
+        self.library_grid.select_uuids(selected)
+        self.library_stack.setCurrentWidget(self.library_grid if self.library_entries else self.library_empty)
+        total = len(self.library_entries)
+        self.lbl_library_sub.setText(
+            self.tr("{0} stories kept on this computer, no Lunii needed. Folder: {1}").format(
+                total, os.path.basename(self.library.folder.rstrip("/\\")) or self.library.folder))
+        self.lbl_library_sub.setToolTip(self.library.folder)
+        self.library_update_panel()
+
+    def library_tooltip(self, entry):
+        lines = [entry.title, self.tr("Official story") if entry.official else self.tr("Custom story"),
+                 os.path.basename(entry.path)]
+        if entry.on_device:
+            lines.append(self.tr("Already on the plugged-in Lunii"))
+        return "\n".join(lines)
+
+    def library_selected(self):
+        return [e for e in (self.library.entry(k) for k in self.library_grid.selected_uuids()) if e]
+
+    def library_update_panel(self):
+        if not hasattr(self, "library_grid"):
+            return
+        selection = self.library_selected()
+        self.library_panel_empty.setVisible(not selection)
+        self.library_panel_story.setVisible(bool(selection))
+        if not selection:
+            return
+
+        if len(selection) == 1:
+            entry = selection[0]
+            data = entry.cover_bytes()
+            pixmap = QPixmap()
+            if data and pixmap.loadFromData(data):
+                self.lbl_library_cover.setPixmap(pixmap.scaled(284, 220, aspectMode=Qt.KeepAspectRatio,
+                                                               mode=Qt.SmoothTransformation))
+            else:
+                self.lbl_library_cover.setPixmap(QPixmap())
+                self.lbl_library_cover.setText(self.tr("No cover for this story"))
+            self.lbl_library_cover.setVisible(True)
+            self.lbl_library_title.setText(entry.title)
+            parts = [self.tr("Official story") if entry.official else self.tr("Custom story"),
+                     f"{entry.size / 1024 / 1024:.0f} MB"]
+            if entry.night_mode:
+                parts.append(self.tr("Night mode available"))
+            self.lbl_library_meta.setText("  ·  ".join(parts))
+            self.lbl_library_desc.setText(entry.description[:300])
+            self.lbl_library_desc.setVisible(bool(entry.description))
+        else:
+            self.lbl_library_cover.setVisible(False)
+            self.lbl_library_title.setText(self.tr("{0} stories selected").format(len(selection)))
+            self.lbl_library_meta.setText(self.tr("The actions below apply to all of them."))
+            self.lbl_library_desc.setVisible(False)
+
+        to_send = [e for e in selection if not e.on_device]
+        if not self.audio_device:
+            note = self.tr("Plug in your Lunii to send these stories to it.")
+        elif not to_send:
+            note = self.tr("Already on the plugged-in Lunii.")
+        elif self.worker:
+            note = self.tr("Please wait, the Lunii is busy.")
+        else:
+            note = ""
+        self.btn_library_send.setText(self.tr("Send to the Lunii") if len(to_send) <= 1
+                                      else self.tr("Send {0} stories to the Lunii").format(len(to_send)))
+        self.btn_library_send.setEnabled(not note)
+        self.lbl_library_send_note.setText(note)
+        self.library_send_note.setVisible(bool(note))
+
+    def library_choose_files(self):
+        file_filter = self.tr("Stories") + " (*.pk *.7z *.zip);;" + self.tr("All files") + " (*)"
+        files, _ = QFileDialog.getOpenFileNames(self, self.tr("Add to my library"), "", file_filter)
+        if files:
+            self.library_rescan(to_add=files)
+
+    def library_keep_copy(self, files):
+        if self.chk_keep_copy.isChecked():
+            files = [f for f in files if is_supported(f)]
+            if files:
+                self.library_rescan(to_add=files)
+
+    def library_change_folder(self):
+        folder = QFileDialog.getExistingDirectory(self, self.tr("Folder of my library"), self.library.folder)
+        if folder:
+            self.settings.setValue("library/folder", folder)
+            self.library = Library(folder)
+            self.library_entries = []
+            self.library_rescan()
+
+    def library_send_selected(self):
+        if not self.audio_device or self.worker:
+            return
+        if self.audio_device.device_version == LUNII_V3 and not self.audio_device.story_key:
+            self.sb_update(self.tr("🛑 Unable to import story, missing story key for Lunii v3"))
+            return
+        files = [e.path for e in self.library_selected() if not e.on_device]
+        if files:
+            self.sb_update(self.tr("Importing stories..."))
+            self.worker_launch(ACTION_IMPORT, files)
+            self.library_update_panel()
+
+    def reveal_in_file_manager(self, path, select=True):
+        os.makedirs(self.library.folder, exist_ok=True)
+        system = platform.system()
+        try:
+            if system == "Darwin":
+                subprocess.Popen(["open", "-R", path] if select else ["open", path])
+            elif system == "Windows":
+                subprocess.Popen(["explorer", "/select,", os.path.normpath(path)] if select
+                                 else ["explorer", os.path.normpath(path)])
+            else:
+                subprocess.Popen(["xdg-open", os.path.dirname(path) if select else path])
+        except OSError:
+            pass
+
+    def library_reveal_selected(self):
+        selection = self.library_selected()
+        if selection:
+            self.reveal_in_file_manager(selection[0].path)
+
+    def library_remove_selected(self):
+        selection = self.library_selected()
+        if not selection:
+            return
+        names = "\n".join(f"• {e.title}" for e in selection[:8]) + ("\n…" if len(selection) > 8 else "")
+        answer = QMessageBox.question(
+            self, self.tr("Remove from my library"),
+            self.tr("These stories will be moved to the trash of the computer:\n\n{0}\n\n"
+                    "Stories already on the Lunii stay on it.").format(names),
+            QMessageBox.Yes | QMessageBox.Cancel, QMessageBox.Cancel)
+        if answer != QMessageBox.Yes:
+            return
+        failed = 0
+        for entry in selection:
+            if not QtCore.QFile.moveToTrash(entry.path):
+                failed += 1
+        if failed:
+            self.statusbar.showMessage(self.tr("🛑 {0} file(s) could not be moved to the trash").format(failed))
+        self.library_grid.clearSelection()
+        self.library_rescan()
+
+    def ts_export_to_library(self):
+        selection = self.tree_stories.selectedItems()
+        if not selection or not self.audio_device:
+            return
+        self.library.ensure_folder()
+        to_export = [item.text(COL_UUID) for item in selection]
+        self.sb_update(self.tr("Copying to your library..."))
+        self.worker_launch(ACTION_EXPORT, to_export, self.library.folder)
 
     @staticmethod
     def _current_mounts():
@@ -654,7 +945,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.audio_device = None
 
         dev: WindowsPath
-        self.combo_device.setPlaceholderText(self.tr("Select your Lunii"))
+        self.combo_device.setPlaceholderText(self.tr("Choose a Lunii"))
         self.sb_update("")
         self.nm_dialog.remove_audioDevice()
 
@@ -666,7 +957,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.setWindowIcon(self.iconLunii)
         if self.combo_device.count():
-            self.combo_device.setPlaceholderText(self.tr("Select your Lunii"))
+            self.combo_device.setPlaceholderText(self.tr("Choose a Lunii"))
 
             # automatic select if only one device
             if self.combo_device.count() == 1:
@@ -675,7 +966,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         else:
             self.sb_update(self.tr("No Lunii detected 😥, try File/Open"))
-            self.combo_device.setPlaceholderText(self.tr("No Lunii detected 😥"))
+            self.combo_device.setPlaceholderText(self.tr("No Lunii plugged in"))
 
 
     def cb_dev_select(self):
@@ -1175,6 +1466,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.order_list.blockSignals(False)
 
         self.covers_fetch()
+        self.library_apply_device_flags()
 
     def story_tooltip(self, story):
         lines = [story.name]
@@ -1291,6 +1583,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.logger.log(logging.INFO, message)
 
         self.refresh_pages()
+        if hasattr(self, "library_grid"):
+            self.library_update_panel()
         if not self.audio_device:
             return
 
@@ -1632,6 +1926,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if not files:
             return
 
+        self.library_keep_copy(files)
         self.sb_update(self.tr("Importing stories..."))
         self.worker_launch(ACTION_IMPORT, files)
 
@@ -1668,6 +1963,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # getting path for dropped files
         file_paths = [url.toLocalFile() for url in event.mimeData().urls()]
 
+        self.library_keep_copy(file_paths)
         self.sb_update(self.tr("Importing stories..."))
         self.worker_launch(ACTION_IMPORT, file_paths)
 
@@ -1809,6 +2105,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.worker:
             self.worker.deleteLater()
             self.worker = None
+
+        self.library_rescan()
+        self.library_update_panel()
         if self.thread:
             self.thread.deleteLater()
             self.thread = None

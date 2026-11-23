@@ -30,6 +30,8 @@ QFrame#sidebar {{
     border-right: 1px solid #E6E3F3;
 }}
 QLabel#brand {{ font-size: 21px; font-weight: 800; }}
+QLabel#signature {{ font-size: 12px; font-weight: 700; color: {ACCENT}; }}
+QCheckBox {{ font-weight: 700; color: #3B3760; spacing: 8px; }}
 QLabel#sideCaption {{ color: {MUTED}; font-size: 12px; font-weight: 800; }}
 QPushButton#nav {{
     text-align: left;
@@ -67,6 +69,8 @@ QFrame#card, QFrame#panel {{
 }}
 QFrame#card QLabel, QFrame#panel QLabel, QFrame#toggleRow QLabel {{ background: transparent; border: none; }}
 QFrame#toggleRow {{ background: transparent; border: none; border-top: 1px solid #EFEDF7; }}
+QFrame#card QLabel#stepNumber {{ background: {ACCENT}; color: #FFFFFF; border-radius: 17px; }}
+QFrame#panel QLabel#lbl_picture {{ background: {GROUND}; border-radius: 16px; color: {MUTED}; }}
 QFrame#note {{ background: {GROUND}; border: none; border-radius: 12px; }}
 QFrame#reason {{ background: #FFF1D6; border: none; border-radius: 14px; }}
 QFrame#reason QLabel {{ background: transparent; }}
