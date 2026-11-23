@@ -672,7 +672,7 @@ class Ui_ModernWindow(_ClassicUi):
         return page
 
     def _build_repair_page(self):
-        page, lay = _page(QCoreApplication.translate("MainWindow", "Repair & tools"), QCoreApplication.translate("MainWindow", "Everything you need when something goes wrong, or to keep a backup."))
+        page, lay = _page(QCoreApplication.translate("MainWindow", "Repair and tools"), QCoreApplication.translate("MainWindow", "Everything you need when something goes wrong, or to keep a backup."))
 
         lay.addWidget(_label(QCoreApplication.translate("MainWindow", "Lost stories"), "h2"))
         self.btn_find_lost = _button(QCoreApplication.translate("MainWindow", "Search"), "secondary", "search")
@@ -724,6 +724,20 @@ class Ui_ModernWindow(_ClassicUi):
         lay.setSpacing(20)
         lay.addStretch(1)
 
+        # why we landed here (e.g. "To add stories, plug in your Lunii first.")
+        self.connect_reason = QFrame()
+        self.connect_reason.setObjectName("reason")
+        reason_lay = QHBoxLayout(self.connect_reason)
+        reason_lay.setContentsMargins(18, 12, 18, 12)
+        reason_ico = QLabel()
+        reason_ico.setPixmap(svg_icon("info", "#7A4B00", 20).pixmap(20, 20))
+        reason_lay.addWidget(reason_ico)
+        self.lbl_connect_reason = _label("", "warn", wrap=True)
+        reason_lay.addWidget(self.lbl_connect_reason, 1)
+        self.connect_reason.setMaximumWidth(640)
+        self.connect_reason.setVisible(False)
+        lay.addWidget(self.connect_reason, 0, Qt.AlignHCenter)
+
         art = QLabel()
         art.setPixmap(QIcon(":/icon/res/logo.png").pixmap(150, 150))
         art.setAlignment(Qt.AlignCenter)
@@ -732,7 +746,7 @@ class Ui_ModernWindow(_ClassicUi):
         title = _label(QCoreApplication.translate("MainWindow", "Plug in your Lunii"), "h1")
         title.setAlignment(Qt.AlignCenter)
         lay.addWidget(title)
-        sub = _label(QCoreApplication.translate("MainWindow", "Lunii.QT finds it on its own as soon as it is plugged in. It also works with the Flam."), "muted", wrap=True)
+        sub = _label(QCoreApplication.translate("MainWindow", "Lunii.QT finds it on its own a few seconds after it is plugged in. It also works with the Flam."), "muted", wrap=True)
         sub.setAlignment(Qt.AlignCenter)
         lay.addWidget(sub)
 
@@ -782,7 +796,7 @@ class Ui_ModernWindow(_ClassicUi):
         self.nav_stories.setText(QCoreApplication.translate("MainWindow", "My stories"))
         self.nav_add.setText(QCoreApplication.translate("MainWindow", "Add"))
         self.nav_order.setText(QCoreApplication.translate("MainWindow", "Arrange"))
-        self.nav_repair.setText(QCoreApplication.translate("MainWindow", "Repair & tools"))
+        self.nav_repair.setText(QCoreApplication.translate("MainWindow", "Repair and tools"))
         self.nav_about.setText(QCoreApplication.translate("MainWindow", "About"))
         self.lbl_side_device.setText(QCoreApplication.translate("MainWindow", "MY LUNII"))
         self.btn_refresh.setToolTip(QCoreApplication.translate("MainWindow", "Look for plugged-in Lunii again"))

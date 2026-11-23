@@ -82,6 +82,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.sizes_hidden = True
         self.details_hidden = False
         self.details_last_uuid = None
+        # navigation
+        self._showing_page = False
+        self._wanted_page = None
         # cover wall
         self.library_mode = True
         self.cover_generation = 0
@@ -213,6 +216,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.update_side_panel([])
         self.update_ffmpeg_state()
 
+        # detect a Lunii plugged in (or unplugged) while the app is open
+        self._known_mounts = self._current_mounts()
+        self.mount_timer = QtCore.QTimer(self)
+        self.mount_timer.setInterval(2500)
+        self.mount_timer.timeout.connect(self.cb_mount_poll)
+        self.mount_timer.start()
+
         # Connect the main window's moveEvent to the custom slot
         self.moveEvent = self.customMoveEvent
 
@@ -256,10 +266,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.library_view.customContextMenuRequested.connect(self.cb_show_library_menu)
 
         # navigation
-        self.nav_stories.clicked.connect(lambda: self.show_page("stories"))
-        self.nav_add.clicked.connect(lambda: self.show_page("add"))
-        self.nav_order.clicked.connect(lambda: self.show_page("order"))
-        self.nav_repair.clicked.connect(lambda: self.show_page("repair"))
+        # toggled also fires for keyboard / VoiceOver activation, clicked for a click on the current entry
+        for nav_btn, page_name in ((self.nav_stories, "stories"), (self.nav_add, "add"),
+                                   (self.nav_order, "order"), (self.nav_repair, "repair")):
+            nav_btn.toggled.connect(lambda on, n=page_name: on and self.show_page(n))
+            nav_btn.clicked.connect(lambda _=False, n=page_name: self.show_page(n))
         self.nav_about.clicked.connect(lambda: about_dlg(self))
         self.btn_add_stories.clicked.connect(lambda: self.show_page("add"))
 
@@ -461,20 +472,42 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         return None
 
     def show_page(self, name):
-        # pages that need a Lunii fall back to the "plug your Lunii" page
-        if name in ("stories", "add", "order") and not self.audio_device:
-            name = "connect"
-        self.pages.setCurrentWidget(self.pages_by_name[name])
-        nav = {"stories": self.nav_stories, "connect": self.nav_stories, "add": self.nav_add,
-               "order": self.nav_order, "repair": self.nav_repair}[name]
-        nav.setChecked(True)
+        if self._showing_page:
+            return
+        self._showing_page = True
+        try:
+            target = name
+            # pages that need a Lunii fall back to the "plug your Lunii" page, saying why
+            if name in ("stories", "add", "order") and not self.audio_device:
+                target = "connect"
+                self._wanted_page = name
+                reasons = {
+                    "stories": self.tr("To see your stories, plug in your Lunii first."),
+                    "add": self.tr("To add stories, plug in your Lunii first."),
+                    "order": self.tr("To arrange your stories, plug in your Lunii first."),
+                }
+                self.lbl_connect_reason.setText(reasons[name])
+                self.connect_reason.setVisible(True)
+            elif name == "connect":
+                self.connect_reason.setVisible(False)
+            else:
+                self._wanted_page = None
+
+            self.pages.setCurrentWidget(self.pages_by_name[target])
+            # keep the entry the user picked highlighted
+            nav = {"stories": self.nav_stories, "connect": self.nav_stories, "add": self.nav_add,
+                   "order": self.nav_order, "repair": self.nav_repair}[name]
+            nav.setChecked(True)
+        finally:
+            self._showing_page = False
 
     def refresh_pages(self):
         current = self.current_page_name()
         if not self.audio_device and current in ("stories", "add", "order"):
             self.show_page("connect")
         elif self.audio_device and current == "connect":
-            self.show_page("stories")
+            # go where the user wanted to go before plugging the Lunii in
+            self.show_page(self._wanted_page or "stories")
 
         has_device = self.audio_device is not None
         for btn in (self.btn_find_lost, self.btn_recover_lost, self.btn_clean_lost,
@@ -549,6 +582,25 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.btn_panel_export.setEnabled(self.act_export.isEnabled())
         self.panel_export_note.setVisible(not self.act_export.isEnabled() and any(s.is_official() for s in stories))
         self.btn_panel_remove.setEnabled(self.act_remove.isEnabled())
+
+    @staticmethod
+    def _current_mounts():
+        try:
+            return frozenset(part.mountpoint for part in psutil.disk_partitions(all=False))
+        except Exception:
+            return None
+
+    def cb_mount_poll(self):
+        if self.worker:
+            return
+        mounts = self._current_mounts()
+        if mounts is None or mounts == self._known_mounts:
+            return
+        self._known_mounts = mounts
+        # a Lunii is open and still there: another disk came or went, nothing to do
+        if self.audio_device and str(self.audio_device.mount_point).rstrip("/") in {m.rstrip("/") for m in mounts}:
+            return
+        self.cb_device_refresh()
 
     def update_ffmpeg_state(self):
         self.ffmpeg_present = which_ffmpeg() is not None

@@ -1353,7 +1353,7 @@ Voulez-vous continuer ?</translation>
         <translation>Astuce : sélectionnez plusieurs histoires avec Ctrl ou Maj pour les déplacer ensemble.</translation>
     </message>
     <message>
-        <source>Repair &amp; tools</source>
+        <source>Repair and tools</source>
         <translation>Réparer et outils</translation>
     </message>
     <message>
@@ -1449,8 +1449,8 @@ Voulez-vous continuer ?</translation>
         <translation>Branchez votre Lunii</translation>
     </message>
     <message>
-        <source>Lunii.QT finds it on its own as soon as it is plugged in. It also works with the Flam.</source>
-        <translation>Lunii.QT la reconnaît toute seule dès qu'elle est branchée. Ça marche aussi avec la Flam.</translation>
+        <source>Lunii.QT finds it on its own a few seconds after it is plugged in. It also works with the Flam.</source>
+        <translation>Lunii.QT la reconnaît toute seule quelques secondes après qu'elle est branchée. Ça marche aussi avec la Flam.</translation>
     </message>
     <message>
         <source>Plug the cable</source>
@@ -1657,6 +1657,18 @@ Voulez-vous continuer ?</translation>
     <message>
         <source>Hidden on the Lunii</source>
         <translation>Masquée sur la Lunii</translation>
+    </message>
+    <message>
+        <source>To see your stories, plug in your Lunii first.</source>
+        <translation>Pour voir vos histoires, branchez d'abord votre Lunii.</translation>
+    </message>
+    <message>
+        <source>To add stories, plug in your Lunii first.</source>
+        <translation>Pour ajouter des histoires, branchez d'abord votre Lunii.</translation>
+    </message>
+    <message>
+        <source>To arrange your stories, plug in your Lunii first.</source>
+        <translation>Pour ranger vos histoires, branchez d'abord votre Lunii.</translation>
     </message>
 </context>
 <context>

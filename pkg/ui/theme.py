@@ -68,6 +68,8 @@ QFrame#card, QFrame#panel {{
 QFrame#card QLabel, QFrame#panel QLabel, QFrame#toggleRow QLabel {{ background: transparent; border: none; }}
 QFrame#toggleRow {{ background: transparent; border: none; border-top: 1px solid #EFEDF7; }}
 QFrame#note {{ background: {GROUND}; border: none; border-radius: 12px; }}
+QFrame#reason {{ background: #FFF1D6; border: none; border-radius: 14px; }}
+QFrame#reason QLabel {{ background: transparent; }}
 
 /* ---------- buttons ---------- */
 QPushButton, QToolButton {{
