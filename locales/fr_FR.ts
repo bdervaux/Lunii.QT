@@ -1280,6 +1280,384 @@ Voulez-vous continuer ?</translation>
         <source>Abort requested, please wait...</source>
         <translation>Annulation demandée, patientez...</translation>
     </message>
+    <message>
+        <source>Drop your stories here</source>
+        <translation>Glissez vos histoires ici</translation>
+    </message>
+    <message>
+        <source>or click to choose them on the computer</source>
+        <translation>ou cliquez pour les choisir sur l'ordinateur</translation>
+    </message>
+    <message>
+        <source>Accepted: .zip, .7z, .pk (Lunii, Flam and STUdio packs)</source>
+        <translation>Formats acceptés : .zip, .7z, .pk (histoires Lunii, Flam et STUdio)</translation>
+    </message>
+    <message>
+        <source>Add stories</source>
+        <translation>Ajouter des histoires</translation>
+    </message>
+    <message>
+        <source>Your stories go straight onto the Lunii. Audio is converted automatically when needed.</source>
+        <translation>Vos histoires vont directement sur la Lunii. Le son est adapté automatiquement si besoin.</translation>
+    </message>
+    <message>
+        <source>Choose files…</source>
+        <translation>Choisir des fichiers…</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>Installer</translation>
+    </message>
+    <message>
+        <source>Audio converter (FFmpeg)</source>
+        <translation>Convertisseur audio (FFmpeg)</translation>
+    </message>
+    <message>
+        <source>Import…</source>
+        <translation>Importer…</translation>
+    </message>
+    <message>
+        <source>STUdio story catalog</source>
+        <translation>Catalogue des histoires STUdio</translation>
+    </message>
+    <message>
+        <source>Gives proper titles and descriptions to stories made with STUdio (unofficial.json).</source>
+        <translation>Donne un vrai titre et une description aux histoires créées avec STUdio (unofficial.json).</translation>
+    </message>
+    <message>
+        <source>Arrange stories</source>
+        <translation>Ranger les histoires</translation>
+    </message>
+    <message>
+        <source>This is the order in which your child discovers the stories with the wheel. Changes are saved on the Lunii right away.</source>
+        <translation>C'est l'ordre dans lequel votre enfant découvre les histoires en tournant la molette. Les changements sont enregistrés tout de suite sur la Lunii.</translation>
+    </message>
+    <message>
+        <source>To the top</source>
+        <translation>Tout en haut</translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation>Monter</translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation>Descendre</translation>
+    </message>
+    <message>
+        <source>To the bottom</source>
+        <translation>Tout en bas</translation>
+    </message>
+    <message>
+        <source>Tip: select several stories with Ctrl or Shift to move them together.</source>
+        <translation>Astuce : sélectionnez plusieurs histoires avec Ctrl ou Maj pour les déplacer ensemble.</translation>
+    </message>
+    <message>
+        <source>Repair &amp; tools</source>
+        <translation>Réparer et outils</translation>
+    </message>
+    <message>
+        <source>Everything you need when something goes wrong, or to keep a backup.</source>
+        <translation>Tout ce qu'il faut quand quelque chose ne va pas, ou pour garder une sauvegarde.</translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation>Chercher</translation>
+    </message>
+    <message>
+        <source>Find lost stories</source>
+        <translation>Chercher les histoires perdues</translation>
+    </message>
+    <message>
+        <source>Looks for stories still on the Lunii that your child can no longer play. Results show in the activity log.</source>
+        <translation>Cherche les histoires encore présentes sur la Lunii mais que votre enfant ne peut plus écouter. Le résultat s'affiche dans le journal d'activité.</translation>
+    </message>
+    <message>
+        <source>Put back</source>
+        <translation>Remettre</translation>
+    </message>
+    <message>
+        <source>Put them back</source>
+        <translation>Les remettre en place</translation>
+    </message>
+    <message>
+        <source>Restores the lost stories that are in good condition.</source>
+        <translation>Remet en place les histoires perdues qui sont en bon état.</translation>
+    </message>
+    <message>
+        <source>Clean up</source>
+        <translation>Nettoyer</translation>
+    </message>
+    <message>
+        <source>Delete what can't be saved</source>
+        <translation>Supprimer ce qui ne peut pas être sauvé</translation>
+    </message>
+    <message>
+        <source>Frees the space used by lost stories. This cannot be undone.</source>
+        <translation>Libère la place prise par les histoires perdues. C'est définitif.</translation>
+    </message>
+    <message>
+        <source>Backups and updates</source>
+        <translation>Sauvegardes et mises à jour</translation>
+    </message>
+    <message>
+        <source>Back up…</source>
+        <translation>Sauvegarder…</translation>
+    </message>
+    <message>
+        <source>Back up all my stories</source>
+        <translation>Sauvegarder toutes mes histoires</translation>
+    </message>
+    <message>
+        <source>Copies every story that can be copied to a folder on the computer.</source>
+        <translation>Copie toutes les histoires qui peuvent l'être dans un dossier de l'ordinateur.</translation>
+    </message>
+    <message>
+        <source>Update covers and titles</source>
+        <translation>Mettre à jour les images et les titres</translation>
+    </message>
+    <message>
+        <source>Downloads the latest official Lunii catalog again.</source>
+        <translation>Retélécharge le dernier catalogue officiel Lunii.</translation>
+    </message>
+    <message>
+        <source>Download…</source>
+        <translation>Télécharger…</translation>
+    </message>
+    <message>
+        <source>Keep a copy of the Lunii software</source>
+        <translation>Garder une copie du logiciel de la Lunii</translation>
+    </message>
+    <message>
+        <source>Downloads the official firmware, to reinstall it if the Lunii breaks down. Requires your Lunii account.</source>
+        <translation>Télécharge le logiciel officiel, pour le réinstaller si la Lunii tombe en panne. Nécessite votre compte Lunii.</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Afficher</translation>
+    </message>
+    <message>
+        <source>Activity log</source>
+        <translation>Journal d'activité</translation>
+    </message>
+    <message>
+        <source>Technical details of everything Lunii.QT does. Useful when asking for help.</source>
+        <translation>Le détail technique de tout ce que fait Lunii.QT. Utile pour demander de l'aide.</translation>
+    </message>
+    <message>
+        <source>Plug in your Lunii</source>
+        <translation>Branchez votre Lunii</translation>
+    </message>
+    <message>
+        <source>Lunii.QT finds it on its own as soon as it is plugged in. It also works with the Flam.</source>
+        <translation>Lunii.QT la reconnaît toute seule dès qu'elle est branchée. Ça marche aussi avec la Flam.</translation>
+    </message>
+    <message>
+        <source>Plug the cable</source>
+        <translation>Branchez le câble</translation>
+    </message>
+    <message>
+        <source>Connect the Lunii to the computer with its USB cable.</source>
+        <translation>Reliez la Lunii à l'ordinateur avec son câble USB.</translation>
+    </message>
+    <message>
+        <source>Turn the Lunii on</source>
+        <translation>Allumez la Lunii</translation>
+    </message>
+    <message>
+        <source>Its screen shows the USB symbol: it is ready.</source>
+        <translation>Son écran affiche le symbole USB : elle est prête.</translation>
+    </message>
+    <message>
+        <source>Wait a moment</source>
+        <translation>Patientez un instant</translation>
+    </message>
+    <message>
+        <source>Your stories show up within a few seconds.</source>
+        <translation>Vos histoires s'affichent en quelques secondes.</translation>
+    </message>
+    <message>
+        <source>Search again</source>
+        <translation>Chercher à nouveau</translation>
+    </message>
+    <message>
+        <source>Still nothing? Try another cable or USB port, or</source>
+        <translation>Toujours rien ? Essayez un autre câble ou un autre port USB, ou</translation>
+    </message>
+    <message>
+        <source>open it manually…</source>
+        <translation>ouvrez-la manuellement…</translation>
+    </message>
+    <message>
+        <source>My stories</source>
+        <translation>Mes histoires</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>Ajouter</translation>
+    </message>
+    <message>
+        <source>Arrange</source>
+        <translation>Ranger</translation>
+    </message>
+    <message>
+        <source>MY LUNII</source>
+        <translation>MA LUNII</translation>
+    </message>
+    <message>
+        <source>Look for plugged-in Lunii again</source>
+        <translation>Rechercher à nouveau les Lunii branchées</translation>
+    </message>
+    <message>
+        <source>What is on the Lunii right now. Click a story to manage it.</source>
+        <translation>Ce qui est sur la Lunii en ce moment. Cliquez sur une histoire pour la gérer.</translation>
+    </message>
+    <message>
+        <source>Night mode</source>
+        <translation>Mode nuit</translation>
+    </message>
+    <message>
+        <source>Night mode settings of the Lunii</source>
+        <translation>Réglages du mode nuit de la Lunii</translation>
+    </message>
+    <message>
+        <source>Click a story to see it here and change its settings.</source>
+        <translation>Cliquez sur une histoire pour la voir ici et changer ses réglages.</translation>
+    </message>
+    <message>
+        <source>Plays on its own, softly, to fall asleep</source>
+        <translation>Lecture enchaînée et douce, pour s'endormir</translation>
+    </message>
+    <message>
+        <source>Hide on the Lunii</source>
+        <translation>Masquer sur la Lunii</translation>
+    </message>
+    <message>
+        <source>Stays on the Lunii, but your child no longer sees it</source>
+        <translation>Elle reste sur la Lunii, mais votre enfant ne la voit plus</translation>
+    </message>
+    <message>
+        <source>Save to the computer</source>
+        <translation>Sauvegarder sur l'ordinateur</translation>
+    </message>
+    <message>
+        <source>Official stories can't be copied to the computer. You can always get them back from your Lunii account.</source>
+        <translation>Les histoires officielles ne peuvent pas être copiées sur l'ordinateur. Vous pourrez toujours les récupérer depuis votre compte Lunii.</translation>
+    </message>
+    <message>
+        <source>Remove from the Lunii</source>
+        <translation>Retirer de la Lunii</translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation>Mettre à jour</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation>Arrêter</translation>
+    </message>
+    <message>
+        <source>Night</source>
+        <translation>Nuit</translation>
+    </message>
+    <message>
+        <source>Hidden</source>
+        <translation>Masquée</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation>Perso</translation>
+    </message>
+    <message>
+        <source>Switch between covers and list</source>
+        <translation>Basculer entre couvertures et liste détaillée</translation>
+    </message>
+    <message>
+        <source>Search a story</source>
+        <translation>Rechercher une histoire</translation>
+    </message>
+    <message>
+        <source>☰ List</source>
+        <translation>☰ Liste</translation>
+    </message>
+    <message>
+        <source>▦ Covers</source>
+        <translation>▦ Couvertures</translation>
+    </message>
+    <message>
+        <source>Plugged in and ready</source>
+        <translation>Branchée et prête</translation>
+    </message>
+    <message>
+        <source>software</source>
+        <translation>logiciel</translation>
+    </message>
+    <message>
+        <source>{0:.1f} GB free of {1:.1f} GB</source>
+        <translation>{0:.1f} Go libres sur {1:.1f} Go</translation>
+    </message>
+    <message>
+        <source>{0} stories selected</source>
+        <translation>{0} histoires sélectionnées</translation>
+    </message>
+    <message>
+        <source>The actions below apply to all of them.</source>
+        <translation>Les actions ci-dessous s'appliquent à toutes.</translation>
+    </message>
+    <message>
+        <source>Installed: stories in any audio format can be added.</source>
+        <translation>Installé : les histoires dans n'importe quel format audio peuvent être ajoutées.</translation>
+    </message>
+    <message>
+        <source>Not installed: only stories already in MP3 can be added. One click installs it.</source>
+        <translation>Pas installé : seules les histoires déjà en MP3 peuvent être ajoutées. Un clic suffit pour l'installer.</translation>
+    </message>
+    <message>
+        <source>Delete lost stories</source>
+        <translation>Supprimer les histoires perdues</translation>
+    </message>
+    <message>
+        <source>Lost stories that cannot be recovered will be deleted from the Lunii.
+This cannot be undone.
+
+Do you want to proceed ?</source>
+        <translation>Les histoires perdues qui ne peuvent pas être récupérées vont être supprimées de la Lunii.
+C'est définitif.
+
+Voulez-vous continuer ?</translation>
+    </message>
+    <message>
+        <source>No cover for this story</source>
+        <translation>Pas d'image pour cette histoire</translation>
+    </message>
+    <message>
+        <source>From {0} to {1} years</source>
+        <translation>De {0} à {1} ans</translation>
+    </message>
+    <message>
+        <source>From {0} years</source>
+        <translation>Dès {0} ans</translation>
+    </message>
+    <message>
+        <source>Up to {0} years</source>
+        <translation>Jusqu'à {0} ans</translation>
+    </message>
+    <message>
+        <source>Official story</source>
+        <translation>Histoire officielle</translation>
+    </message>
+    <message>
+        <source>Custom story</source>
+        <translation>Histoire perso</translation>
+    </message>
+    <message>
+        <source>Night mode available</source>
+        <translation>Mode nuit disponible</translation>
+    </message>
+    <message>
+        <source>Hidden on the Lunii</source>
+        <translation>Masquée sur la Lunii</translation>
+    </message>
 </context>
 <context>
     <name>NightModeWindow</name>

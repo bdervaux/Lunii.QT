@@ -10,6 +10,7 @@ from PySide6.QtCore import QItemSelectionModel, QUrl, QSize
 from PySide6.QtGui import QFont, QShortcut, QKeySequence, QPixmap, Qt, QDesktopServices, QIcon, QGuiApplication, QColor
 from PySide6.QtWidgets import QMainWindow, QTreeWidgetItem, QFileDialog, QMessageBox, QLabel, QFrame, QHeaderView, \
     QDialog, QApplication, QCheckBox
+from PySide6.QtWidgets import QToolButton, QListWidgetItem
 
 from pkg import versionWorker
 from pkg.api import constants
@@ -25,7 +26,10 @@ from pkg.nm_window import NightModeWindow
 from pkg.ui.about_ui import about_dlg
 from pkg.ui.debug_ui import DebugDialog, LUNII_LOGGER
 from pkg.ui.login_ui import LoginDialog
-from pkg.ui.main_ui import Ui_MainWindow
+# new parent-friendly layout, built on top of the classic generated UI (pkg/ui/main_ui.py)
+from pkg.ui.modern_ui import Ui_ModernWindow as Ui_MainWindow
+from pkg.api.covers import CoverFetcher
+from pkg.library_view import LibraryView, ROLE_UUID
 
 COL_NAME = 0
 COL_NM = 1
@@ -78,6 +82,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.sizes_hidden = True
         self.details_hidden = False
         self.details_last_uuid = None
+        # cover wall
+        self.library_mode = True
+        self.cover_generation = 0
+        self.cover_fetchers = set()
+        self.covers_pending = set()
+        self.covers_failed = set()
         self.ffmpeg_present = which_ffmpeg() is not None
 
         # actions local storage
@@ -183,8 +193,39 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.act_update = next(act for act in t_actions if act.objectName() == "actionUpdate")
         self.act_update.setVisible(False)
 
+        # Cover wall (default view), the classic list stays one click away
+        self.library_view = LibraryView(self.centralwidget)
+        self.library_view.set_labels(self.tr("Night"), self.tr("Hidden"), self.tr("Custom"))
+        self.verticalLayout_2.insertWidget(self.verticalLayout_2.indexOf(self.tree_stories) + 1, self.library_view)
+        self.tree_stories.setIconSize(QSize(40, 40))
+
+        self.btn_view = QToolButton(self.centralwidget)
+        self.btn_view.setObjectName("btn_view")
+        self.btn_view.setMinimumHeight(40)
+        self.btn_view.setCheckable(True)
+        self.btn_view.setChecked(self.library_mode)
+        self.btn_view.setToolTip(self.tr("Switch between covers and list"))
+        self.top_layout.insertWidget(self.top_layout.indexOf(self.le_filter), self.btn_view)
+        self.le_filter.setPlaceholderText(self.tr("Search a story"))
+        self.apply_view_mode()
+
+        # story selection is shown in the side panel, nothing selected yet
+        self.update_side_panel([])
+        self.update_ffmpeg_state()
+
         # Connect the main window's moveEvent to the custom slot
         self.moveEvent = self.customMoveEvent
+
+    def apply_view_mode(self):
+        self.tree_stories.setVisible(not self.library_mode)
+        self.library_view.setVisible(self.library_mode)
+        self.btn_view.setText(self.tr("☰ List") if self.library_mode else self.tr("▦ Covers"))
+
+    def cb_toggle_view(self, checked):
+        self.library_mode = checked
+        self.apply_view_mode()
+        if not self.library_mode:
+            self.app.postEvent(self.tree_stories, QtCore.QEvent(QtCore.QEvent.Resize))
 
     # connecting slots and signals
     def setup_connections(self):
@@ -206,6 +247,61 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.tree_stories.customContextMenuRequested.connect(self.cb_show_context_menu)
         # self.tree_stories.itemClicked.connect(self.ts_clicked)
 
+        # cover wall
+        self.btn_view.toggled.connect(self.cb_toggle_view)
+        self.library_view.signal_selection.connect(self.cb_library_select)
+        # drag & drop events of an item view are delivered to its viewport
+        self.library_view.viewport().installEventFilter(self)
+        self.library_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.library_view.customContextMenuRequested.connect(self.cb_show_library_menu)
+
+        # navigation
+        self.nav_stories.clicked.connect(lambda: self.show_page("stories"))
+        self.nav_add.clicked.connect(lambda: self.show_page("add"))
+        self.nav_order.clicked.connect(lambda: self.show_page("order"))
+        self.nav_repair.clicked.connect(lambda: self.show_page("repair"))
+        self.nav_about.clicked.connect(lambda: about_dlg(self))
+        self.btn_add_stories.clicked.connect(lambda: self.show_page("add"))
+
+        # side panel (acts on the selected stories, like the Stories menu)
+        # after the action, re-sync the switches (the action may have been refused)
+        self.row_night.switch.clicked.connect(
+            lambda: (self.ts_nm(), self.update_side_panel(self.tree_stories.selectedItems())))
+        self.row_hidden.switch.clicked.connect(
+            lambda: (self.ts_hide(), self.update_side_panel(self.tree_stories.selectedItems())))
+        self.btn_panel_export.clicked.connect(self.ts_export)
+        self.btn_panel_remove.clicked.connect(self.ts_remove)
+
+        # add page
+        self.drop_zone.clicked.connect(self.ts_import)
+        self.btn_choose_files.clicked.connect(self.ts_import)
+        self.btn_ffmpeg.clicked.connect(lambda: self.cb_menu_tools(self.actionTranscode))
+        self.btn_import_studio_db.clicked.connect(lambda: self.cb_menu_file(self.actionImport_DB))
+
+        # arrange page
+        self.order_list.itemSelectionChanged.connect(
+            lambda: self.cb_library_select([it.data(ROLE_UUID) for it in self.order_list.selectedItems()]))
+        self.order_list.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.order_list.customContextMenuRequested.connect(
+            lambda point: (self.cb_menu_story_update(),
+                           self.menuStory.exec_(self.order_list.viewport().mapToGlobal(point))))
+        self.btn_mv_top.clicked.connect(lambda: self.ts_move(-10))
+        self.btn_mv_up.clicked.connect(lambda: self.ts_move(-1))
+        self.btn_mv_down.clicked.connect(lambda: self.ts_move(1))
+        self.btn_mv_bottom.clicked.connect(lambda: self.ts_move(10))
+
+        # repair & tools page (btn_db is already wired to cb_db_refresh)
+        self.btn_find_lost.clicked.connect(lambda: self.cb_menu_lost(self.actionFind_stories))
+        self.btn_recover_lost.clicked.connect(lambda: self.cb_menu_lost(self.actionRecover_stories))
+        self.btn_clean_lost.clicked.connect(self.cb_clean_lost_confirm)
+        self.btn_export_all.clicked.connect(self.ts_export_all)
+        self.btn_get_fw.clicked.connect(lambda: self.cb_menu_tools(self.actionGet_firmware))
+        self.btn_show_log.clicked.connect(lambda: self.cb_menu_tools(self.actionShow_Log))
+
+        # "plug your Lunii" page
+        self.btn_connect_retry.clicked.connect(self.cb_device_refresh)
+        self.btn_connect_open.clicked.connect(lambda: self.cb_menu_file(self.actionOpen_Lunii))
+
         # connect menu callbacks
         self.menuFile.triggered.connect(self.cb_menu_file)
         self.menuStory.triggered.connect(self.cb_menu_story)
@@ -223,6 +319,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     # TREE WIDGET MANAGEMENT
     def eventFilter(self, obj, event):
+        if obj is self.library_view.viewport():
+            if event.type() in (QtCore.QEvent.DragEnter, QtCore.QEvent.DragMove):
+                self.ts_dragenter_action(event)
+                return True
+            elif event.type() == QtCore.QEvent.Drop:
+                self.ts_drop_action(event)
+                return True
+            return False
         if obj.objectName() == "tree_stories":
             if event.type() == QtCore.QEvent.DragEnter:
                 self.ts_dragenter_action(event)
@@ -316,6 +420,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.thread and self.thread.isRunning():
             self.worker_abort()
             self.thread.wait()
+        for fetcher in list(self.cover_fetchers):
+            fetcher.abort()
+            fetcher.wait()
 
         event.accept()
 
@@ -324,6 +431,154 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.cb_menu_story_update()
 
         self.menuStory.exec_(self.tree_stories.mapToGlobal(point))
+
+    def cb_show_library_menu(self, point):
+        self.cb_menu_story_update()
+        self.menuStory.exec_(self.library_view.viewport().mapToGlobal(point))
+
+    def cb_library_select(self, uuids):
+        # mirror the cover wall selection into the list, all story actions use it
+        wanted = set(uuids)
+        self.tree_stories.blockSignals(True)
+        self.tree_stories.clearSelection()
+        first = None
+        for index in range(self.tree_stories.topLevelItemCount()):
+            item = self.tree_stories.topLevelItem(index)
+            if item.text(COL_UUID) in wanted:
+                item.setSelected(True)
+                first = first or item
+        if first:
+            self.tree_stories.setCurrentItem(first, COL_NAME, QItemSelectionModel.NoUpdate)
+        self.tree_stories.blockSignals(False)
+        self.cb_tree_select()
+
+    # NEW UI: pages, side panel, device card
+    def current_page_name(self):
+        current = self.pages.currentWidget()
+        for name, page in self.pages_by_name.items():
+            if page is current:
+                return name
+        return None
+
+    def show_page(self, name):
+        # pages that need a Lunii fall back to the "plug your Lunii" page
+        if name in ("stories", "add", "order") and not self.audio_device:
+            name = "connect"
+        self.pages.setCurrentWidget(self.pages_by_name[name])
+        nav = {"stories": self.nav_stories, "connect": self.nav_stories, "add": self.nav_add,
+               "order": self.nav_order, "repair": self.nav_repair}[name]
+        nav.setChecked(True)
+
+    def refresh_pages(self):
+        current = self.current_page_name()
+        if not self.audio_device and current in ("stories", "add", "order"):
+            self.show_page("connect")
+        elif self.audio_device and current == "connect":
+            self.show_page("stories")
+
+        has_device = self.audio_device is not None
+        for btn in (self.btn_find_lost, self.btn_recover_lost, self.btn_clean_lost,
+                    self.btn_export_all, self.btn_get_fw):
+            btn.setEnabled(has_device)
+
+    def update_device_card(self, hw_version="", sw_version=""):
+        dev = self.audio_device
+        if not dev:
+            return
+        is_flam_dev = dev.device_version == FLAM_V1
+        self.lbl_device_icon.setPixmap((self.iconFlam if is_flam_dev else self.iconLunii).pixmap(48, 48))
+        self.lbl_device_name.setText(hw_version or ("Flam" if is_flam_dev else "Lunii"))
+        state = self.tr("Plugged in and ready")
+        if sw_version:
+            state += f"  ·  {self.tr('software')} {sw_version}"
+        self.lbl_device_state.setText(state)
+        self.lbl_device_state.setToolTip(str(dev))
+
+        try:
+            usage = psutil.disk_usage(str(dev.mount_point))
+            free_gb = usage.free / 1024 ** 3
+            total_gb = usage.total / 1024 ** 3
+            self.lbl_storage_text.setText(self.tr("{0:.1f} GB free of {1:.1f} GB").format(free_gb, total_gb))
+            self.bar_storage.setValue(int(usage.used * 1000 / usage.total) if usage.total else 0)
+            low = usage.free < 500 * 1024 * 1024
+        except OSError:
+            self.lbl_storage_text.setText("")
+            low = False
+        self.bar_storage.setProperty("low", "true" if low else "false")
+        self.bar_storage.style().unpolish(self.bar_storage)
+        self.bar_storage.style().polish(self.bar_storage)
+
+        self.lbl_device_count.setText(str(len(dev.stories) if dev.stories else 0))
+        self.btn_nightmode.setVisible(not is_flam_dev)
+
+    def update_side_panel(self, selection):
+        count = len(selection)
+        self.panel_empty.setVisible(count == 0)
+        self.panel_story.setVisible(count > 0)
+        if count == 0 or not self.audio_device:
+            self.panel_empty.setVisible(True)
+            self.panel_story.setVisible(False)
+            return
+
+        # same enable/disable rules as the Stories menu
+        self.cb_menu_story_update()
+
+        stories = [self.audio_device.stories.get_story(item.text(COL_UUID)) for item in selection]
+        stories = [one for one in stories if one]
+        if not stories:
+            return
+
+        if count == 1:
+            story = stories[0]
+            self.lbl_panel_title.setText(story.name)
+            details = self.story_tooltip(story).split("\n")[1:]
+            self.lbl_panel_meta.setText("  ·  ".join(details))
+        else:
+            self.lbl_panel_title.setText(self.tr("{0} stories selected").format(count))
+            self.lbl_panel_meta.setText(self.tr("The actions below apply to all of them."))
+
+        is_flam_dev = self.audio_device.device_version == FLAM_V1
+        self.row_night.setVisible(not is_flam_dev)
+        for row, checked, action in ((self.row_night, all(s.night_mode() for s in stories), self.act_nm),
+                                     (self.row_hidden, all(s.hidden for s in stories), self.act_hide)):
+            row.switch.blockSignals(True)
+            row.switch.setChecked(bool(checked))
+            row.switch.blockSignals(False)
+            row.switch.setEnabled(action.isEnabled())
+
+        self.btn_panel_export.setEnabled(self.act_export.isEnabled())
+        self.panel_export_note.setVisible(not self.act_export.isEnabled() and any(s.is_official() for s in stories))
+        self.btn_panel_remove.setEnabled(self.act_remove.isEnabled())
+
+    def update_ffmpeg_state(self):
+        self.ffmpeg_present = which_ffmpeg() is not None
+        if self.ffmpeg_present:
+            self.lbl_ffmpeg_state.setText(self.tr("Installed: stories in any audio format can be added."))
+        else:
+            self.lbl_ffmpeg_state.setText(self.tr("Not installed: only stories already in MP3 can be added. One click installs it."))
+        self.btn_ffmpeg.setVisible(not self.ffmpeg_present)
+
+    def cb_clean_lost_confirm(self):
+        answer = QMessageBox.question(
+            self, self.tr("Delete lost stories"),
+            self.tr("Lost stories that cannot be recovered will be deleted from the Lunii.\nThis cannot be undone.\n\nDo you want to proceed ?"),
+            QMessageBox.Yes | QMessageBox.Cancel, QMessageBox.Cancel)
+        if answer == QMessageBox.Yes:
+            self.cb_menu_lost(self.actionRemove_stories)
+
+    def order_select_uuids(self, uuids):
+        wanted = set(uuids)
+        self.order_list.blockSignals(True)
+        self.order_list.clearSelection()
+        first = None
+        for index in range(self.order_list.count()):
+            item = self.order_list.item(index)
+            if item.data(ROLE_UUID) in wanted:
+                item.setSelected(True)
+                first = first or item
+        if first:
+            self.order_list.scrollToItem(first)
+        self.order_list.blockSignals(False)
 
     def cb_show_log(self):
         # prepare for debug dialog to show
@@ -444,6 +699,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def cb_tree_select(self):
         # getting selection
         selection = self.tree_stories.selectedItems()
+        selected_uuids = [item.text(COL_UUID) for item in selection]
+        self.library_view.select_uuids(selected_uuids)
+        self.order_select_uuids(selected_uuids)
+        self.update_side_panel(selection)
         show_details = len(selection) == 1 and not self.details_hidden
         self.te_story_details.setVisible(show_details)
         self.lbl_picture.setVisible(show_details)
@@ -467,7 +726,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if not one_story:
                 return
             one_story_desc = one_story.desc
-            one_story_image = one_story.get_picture()
+            # no blocking network call here: covers are fetched in background
+            if one_story.str_uuid in self.covers_pending or one_story.str_uuid in self.covers_failed:
+                one_story_image = None
+            else:
+                one_story_image = one_story.get_picture()
 
             # nothing to display
             if (not one_story_desc or one_story_desc == DESC_NOT_FOUND) and not one_story_image:
@@ -487,10 +750,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 pixmap = QPixmap()
                 pixmap.loadFromData(one_story_image)
 
-                scaled_pixmap = pixmap.scaled(192, 192, aspectMode=Qt.KeepAspectRatio, mode=Qt.SmoothTransformation)
+                scaled_pixmap = pixmap.scaled(284, 220, aspectMode=Qt.KeepAspectRatio, mode=Qt.SmoothTransformation)
                 self.lbl_picture.setPixmap(scaled_pixmap)
             else:
-                self.lbl_picture.setText(self.tr("Failed to fetch BMP file."))
+                self.lbl_picture.setText(self.tr("No cover for this story"))
 
     def cb_db_refresh(self):
         self.sb_update(self.tr("Fetching official Lunii DB..."))
@@ -500,6 +763,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.app.processEvents()
 
         retVal = story_load_db(True)
+        self.covers_failed.clear()
 
         self.pbar_total.setValue(90)
         self.app.processEvents()
@@ -781,6 +1045,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def ts_update(self):
         # clear previous story list
         self.tree_stories.clear()
+        self.library_view.populate([])
+        self.order_list.clear()
         self.details_last_uuid = None
         self.ts_populate()
         # update status in status bar
@@ -799,7 +1065,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         le_filter = self.le_filter.text()
 
         # adding items
-        for story in self.audio_device.stories:
+        visible_stories = []
+        for position, story in enumerate(self.audio_device.stories, start=1):
             # filtering 
             if (le_filter and
                 not le_filter.lower() in story.name.lower() and
@@ -810,6 +1077,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             item = QTreeWidgetItem()
 
             item.setText(COL_NAME, story.name)
+            cover = self.library_view.cover_icon(story.str_uuid)
+            if cover:
+                item.setIcon(COL_NAME, cover)
+            item.setToolTip(COL_NAME, self.story_tooltip(story))
+            visible_stories.append((position, story))
             item.setText(COL_NM, "🛏️" if story.night_mode() else "")
             item.setTextAlignment(COL_NM, Qt.AlignCenter)
 
@@ -831,6 +1103,98 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     item.setForeground(column, grey_color)
 
             self.tree_stories.addTopLevelItem(item)
+
+        # cover wall + covers download from the Lunii DB
+        self.library_view.populate(visible_stories, self.story_tooltip)
+
+        # "Arrange" page list
+        self.order_list.blockSignals(True)
+        self.order_list.clear()
+        for position, story in visible_stories:
+            order_item = QListWidgetItem(f"{position}.   {story.name}")
+            order_item.setData(ROLE_UUID, story.str_uuid)
+            order_item.setToolTip(self.story_tooltip(story))
+            cover = self.library_view.cover_icon(story.str_uuid, 44)
+            if cover:
+                order_item.setIcon(cover)
+            if story.hidden:
+                order_item.setForeground(QColor(140, 136, 165))
+            self.order_list.addItem(order_item)
+        self.order_list.blockSignals(False)
+
+        self.covers_fetch()
+
+    def story_tooltip(self, story):
+        lines = [story.name]
+        ages = story.age_range
+        if ages:
+            age_min, age_max = ages
+            if age_min is not None and age_max is not None:
+                lines.append(self.tr("From {0} to {1} years").format(age_min, age_max))
+            elif age_min is not None:
+                lines.append(self.tr("From {0} years").format(age_min))
+            else:
+                lines.append(self.tr("Up to {0} years").format(age_max))
+        lines.append(self.tr("Official story") if story.is_official() else self.tr("Custom story"))
+        if story.night_mode():
+            lines.append(self.tr("Night mode available"))
+        if story.hidden:
+            lines.append(self.tr("Hidden on the Lunii"))
+        return "\n".join(lines)
+
+    # COVERS (fetched in background from the Lunii DB, cached on disk)
+    def covers_fetch(self, reload: bool = False):
+        if not self.audio_device or not self.audio_device.stories:
+            return
+        if reload:
+            self.covers_failed.clear()
+        todo = [s for s in self.audio_device.stories
+                if s.str_uuid not in self.covers_pending
+                and (reload or (not self.library_view.has_cover(s.str_uuid) and s.str_uuid not in self.covers_failed))]
+        if not todo:
+            return
+
+        self.cover_generation += 1
+        fetcher = CoverFetcher(todo, self.cover_generation, reload, self)
+        fetcher.signal_cover.connect(self.slot_cover)
+        fetcher.signal_done.connect(self.slot_covers_done)
+        fetcher.finished.connect(lambda f=fetcher: self.cover_fetchers.discard(f))
+        fetcher.finished.connect(fetcher.deleteLater)
+        self.covers_pending.update(s.str_uuid for s in todo)
+        self.cover_fetchers.add(fetcher)
+        fetcher.start()
+
+    def slot_cover(self, generation, uuid, data):
+        self.covers_pending.discard(uuid)
+        self.library_view.set_cover(uuid, data)
+
+        small = self.library_view.cover_icon(uuid, 44)
+        for index in range(self.order_list.count()):
+            order_item = self.order_list.item(index)
+            if order_item.data(ROLE_UUID) == uuid and small:
+                order_item.setIcon(small)
+                break
+
+        icon = self.library_view.cover_icon(uuid)
+        for index in range(self.tree_stories.topLevelItemCount()):
+            item = self.tree_stories.topLevelItem(index)
+            if item.text(COL_UUID) == uuid:
+                if icon:
+                    item.setIcon(COL_NAME, icon)
+                # refresh the details panel if it shows this story
+                if uuid == self.details_last_uuid:
+                    self.details_last_uuid = None
+                    self.cb_tree_select()
+                break
+
+    def slot_covers_done(self, generation, found, total):
+        fetcher = self.sender()
+        if isinstance(fetcher, CoverFetcher):
+            for story in fetcher.stories:
+                uuid = story.str_uuid
+                self.covers_pending.discard(uuid)
+                if not self.library_view.has_cover(uuid):
+                    self.covers_failed.add(uuid)
 
     def sb_create(self):
         self.statusBar().showMessage("bla-bla bla")
@@ -874,6 +1238,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if message:
             self.logger.log(logging.INFO, message)
 
+        self.refresh_pages()
         if not self.audio_device:
             return
 
@@ -914,6 +1279,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             color = "red"
         self.lbl_hfs.setStyleSheet(f'border: 0; color:  {color};')
         self.lbl_fs.setStyleSheet(f'border: 0; color:  {color};')
+
+        self.update_device_card(HW_version, SW_version)
 
         # Story count
         count_items = self.tree_stories.topLevelItemCount()
@@ -1285,6 +1652,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # UI limitations
         self.btn_db.setEnabled(False)
         self.tree_stories.setEnabled(False)
+        self.library_view.setEnabled(False)
+        self.order_list.setEnabled(False)
         self.btn_refresh.setEnabled(False)
         self.combo_device.setEnabled(False)
 
@@ -1361,6 +1730,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # print("SLOT FINISHED")
         # updating UI
         self.tree_stories.setEnabled(True)
+        self.library_view.setEnabled(True)
+        self.order_list.setEnabled(True)
+        self.update_ffmpeg_state()
         self.btn_db.setEnabled(True)
         self.btn_refresh.setEnabled(True)
         self.combo_device.setEnabled(True)

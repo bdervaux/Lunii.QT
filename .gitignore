@@ -131,3 +131,5 @@ dmypy.json
 
 .idea
 .vscode
+# Lunii.QT launchers
+.lunii-launcher.log

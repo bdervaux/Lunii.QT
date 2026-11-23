@@ -356,6 +356,25 @@ class Story:
         return self.uuid.hex[24:].upper()
 
     @property
+    def age_range(self):
+        """(age_min, age_max) from the official Lunii DB, None when unknown."""
+        info = DB_OFFICIAL.get(str(self.uuid).upper())
+        if not info:
+            return None
+
+        def _as_int(value):
+            try:
+                return int(value)
+            except (TypeError, ValueError):
+                return None
+
+        age_min = _as_int(info.get("age_min"))
+        age_max = _as_int(info.get("age_max"))
+        if age_min is None and age_max is None:
+            return None
+        return age_min, age_max
+
+    @property
     def name(self):
         one_uuid = str(self.uuid).upper()
 
@@ -414,7 +433,7 @@ class Story:
 
         return AUTHOR_NOT_FOUND
 
-    def get_picture(self, reload: bool = False):
+    def get_picture(self, reload: bool = False, timeout: float = 2):
         image_data = None
 
         # creating cache dir if necessary
@@ -430,9 +449,12 @@ class Story:
             one_story_imageURL = self.picture_url()
             # print(f"Downloading for {one_uuid} to {res_file}")
             try:
+                if not one_story_imageURL:
+                    # not in official DB: only the local cache may have a cover
+                    raise requests.exceptions.InvalidURL()
                 # Set the timeout for the request
-                response = requests.get(one_story_imageURL, timeout=2)
-                if response.status_code == 200:
+                response = requests.get(one_story_imageURL, timeout=timeout)
+                if response.status_code == 200 and response.content:
                     # Load image from bytes
                     image_data = response.content
                     with open(res_file, "wb") as fp:

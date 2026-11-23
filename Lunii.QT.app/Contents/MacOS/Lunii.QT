@@ -1,0 +1,65 @@
+#!/bin/bash
+# Lunii.QT launcher for macOS.
+# This .app sits next to the Lunii.QT source folder (lunii-qt.py, pkg/, ...).
+# First launch: prepares a private Python environment (2-5 min, Internet needed).
+# Next launches: opens the application in a few seconds.
+
+APP_DIR="$(cd "$(dirname "$0")/../../.." && pwd)"
+cd "$APP_DIR" || exit 1
+VENV="$APP_DIR/.venv"
+READY="$VENV/.lunii-ready"
+LOG="$APP_DIR/.lunii-launcher.log"
+
+# apps opened from the Finder get a minimal PATH
+export PATH="/Library/Frameworks/Python.framework/Versions/Current/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
+
+dialog() {
+  osascript -e "display dialog \"$1\" with title \"Lunii.QT\" buttons {\"OK\"} default button 1 with icon ${2:-note}" >/dev/null 2>&1
+}
+
+if [ ! -f "$APP_DIR/lunii-qt.py" ]; then
+  dialog "Gardez Lunii.QT.app dans son dossier d'origine (à côté du dossier « pkg »)." caution
+  exit 1
+fi
+
+# 1. find Python (3.12 / 3.11 first: the safest with Qt)
+PY=""
+for candidate in python3.12 python3.11 python3.10 python3.13 python3; do
+  path="$(command -v "$candidate" 2>/dev/null)"
+  [ -z "$path" ] && continue
+  # /usr/bin/python3 is only a stub when Apple's developer tools are missing
+  if [ "$path" = "/usr/bin/python3" ] && ! xcode-select -p >/dev/null 2>&1; then
+    continue
+  fi
+  if "$path" -c "import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)" >/dev/null 2>&1; then
+    PY="$path"
+    break
+  fi
+done
+if [ -z "$PY" ]; then
+  open "https://www.python.org/downloads/macos/"
+  dialog "Il manque Python sur ce Mac.\n\nLa page de téléchargement vient de s'ouvrir : installez Python 3.12, puis rouvrez Lunii.QT." caution
+  exit 1
+fi
+
+# 2. first launch: prepare everything
+if [ ! -f "$READY" ]; then
+  osascript -e 'display notification "Première ouverture : préparation en cours, cela peut prendre quelques minutes…" with title "Lunii.QT"' >/dev/null 2>&1
+  {
+    rm -rf "$VENV"
+    "$PY" -m venv "$VENV" &&
+    "$VENV/bin/python" -m pip install --upgrade pip &&
+    "$VENV/bin/python" -m pip install -r requirements-launcher.txt
+  } >"$LOG" 2>&1
+  if [ $? -ne 0 ]; then
+    dialog "La préparation a échoué. Vérifiez votre connexion Internet et réessayez.\n\nDétails : $LOG" stop
+    exit 1
+  fi
+  # French translations + application resources
+  "$VENV/bin/pyside6-lrelease" locales/fr_FR.ts -qm locales/fr_FR.qm >>"$LOG" 2>&1
+  "$VENV/bin/pyside6-rcc" resources.qrc -o resources_rc.py >>"$LOG" 2>&1
+  touch "$READY"
+fi
+
+# 3. run
+exec "$VENV/bin/python" lunii-qt.py

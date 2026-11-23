@@ -8,7 +8,7 @@ from pkg.main_window import MainWindow
 
 if __name__ == "__main__":
     app = QApplication([])
-    app.setStyle("WindowsVista")   # ou "fusion", "Windows", "macos", "gtk"
+    app.setStyle("Fusion")   # Fusion renders the "Veilleuse" stylesheet the same on Windows, macOS and Linux
     app.setAttribute(Qt.AA_DontShowIconsInMenus, False)
 
     translator = QTranslator(app)
