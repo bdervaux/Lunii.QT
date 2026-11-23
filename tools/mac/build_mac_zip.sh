@@ -36,6 +36,10 @@ echo "▶ Installers"
 cp "$ROOT/tools/mac/Installer MyLunii.command" "$ROOT/tools/mac/installer-mylunii.sh" "$ROOT/tools/mac/LISEZ-MOI.txt" "$STAGE/"
 chmod +x "$STAGE/Installer MyLunii.command" "$STAGE/installer-mylunii.sh"
 
+echo "▶ Permissions"
+chmod -R u+rwX,go+rX "$STAGE"
+chmod +x "$STAGE/MyLunii.app/Contents/MacOS/MyLunii" "$STAGE/Installer MyLunii.command" "$STAGE/installer-mylunii.sh"
+
 echo "▶ Zip"
 mkdir -p "$OUT"
 rm -f "$OUT/MyLunii-Mac.zip"

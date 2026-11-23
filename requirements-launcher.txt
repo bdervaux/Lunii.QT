@@ -1,12 +1,12 @@
 # Used by "Lancer MyLunii" (Mac / Windows): same libraries as requirements.txt,
 # with slightly looser versions so recent Python versions also find ready-made packages.
 PySide6-Essentials>=6.7.3,<7
-psutil>=7.0
+psutil>=7.0,<8
 py7zr~=0.22.0
-xxtea>=3.0
-requests>=2.32
-pycryptodome>=3.23.0
-pillow>=11.0
-mutagen>=1.47
+xxtea>=3.0,<7
+requests>=2.32,<3
+pycryptodome>=3.23.0,<5
+pillow>=11.0,<14
+mutagen>=1.47,<2
 ffmpeg-python
-unidecode>=1.4
+unidecode>=1.4,<2
