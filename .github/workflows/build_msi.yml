@@ -43,7 +43,7 @@ jobs:
 
     - name: Insert icon (manually)
       run: |
-        tools\rcedit-x64.exe build\exe.win-amd64-3.11\Lunii-Qt.exe --set-icon res\lunii.ico
+        tools\rcedit-x64.exe build\exe.win-amd64-3.11\MyLunii.exe --set-icon res\mylunii.ico
 
     - name: cx_Freeze - Build MSI
       run: |
@@ -51,22 +51,22 @@ jobs:
 
     - name: Create portable archive
       run: |
-        Copy-Item -Path "./build/exe.win-amd64-3.11" -Destination ./build/Lunii-Qt -Recurse
-        Compress-Archive -DestinationPath Lunii.Qt-${{ github.ref_name }}-win64_portable.zip -CompressionLevel Optimal -Path ./build/Lunii-Qt
+        Copy-Item -Path "./build/exe.win-amd64-3.11" -Destination ./build/MyLunii -Recurse
+        Compress-Archive -DestinationPath MyLunii-${{ github.ref_name }}-win64_portable.zip -CompressionLevel Optimal -Path ./build/MyLunii
 
     - name: Upload MSI
       uses: actions/upload-artifact@v4.0.0
       with:
-        name: Lunii.Qt-${{ github.ref_name }}-win64_msi
+        name: MyLunii-${{ github.ref_name }}-win64_msi
         path: |
           ./dist/*.msi
 
     - name: Upload Portable
       uses: actions/upload-artifact@v4.0.0
       with:
-        name: Lunii.Qt-${{ github.ref_name }}-win64_portable
+        name: MyLunii-${{ github.ref_name }}-win64_portable
         path: |
-          ./build/Lunii-Qt
+          ./build/MyLunii
 
     - name: Release
       uses: softprops/action-gh-release@v1
@@ -75,4 +75,4 @@ jobs:
         draft: true
         files: |
           ./dist/*.msi
-          Lunii.Qt-${{ github.ref_name }}-win64_portable.zip
+          MyLunii-${{ github.ref_name }}-win64_portable.zip

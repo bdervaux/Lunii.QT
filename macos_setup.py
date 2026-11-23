@@ -1,14 +1,14 @@
 from setuptools import setup
 
 APP = ['lunii-qt.py']
-DATA_FILES = ['res/lunii.ico', 'res/dmg_icon.icns']
+DATA_FILES = ['res/lunii.ico', 'res/mylunii.icns']
 OPTIONS = {
     'argv_emulation': False,
-    'iconfile': 'res/dmg_icon.icns',
+    'iconfile': 'res/mylunii.icns',
     'plist': {
-        'CFBundleName': 'luniiQt',
-        'CFBundleDisplayName': 'Lunii Qt',
-        'CFBundleIdentifier': 'com.o-daneel.luniiqt',
+        'CFBundleName': 'MyLunii',
+        'CFBundleDisplayName': 'MyLunii',
+        'CFBundleIdentifier': 'com.dervo.mylunii',
         'CFBundleVersion': '1.0.0',
         'CFBundleShortVersionString': '1.0.0',
         'NSHighResolutionCapable': True,

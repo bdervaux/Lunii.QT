@@ -8,15 +8,15 @@ base = "Win32GUI" if sys.platform == "win32" else None
 
 directory_table = [
     ("ProgramMenuFolder", "TARGETDIR", "."),
-    ("Lunii", "ProgramMenuFolder", "Lunii QT"),
+    ("Lunii", "ProgramMenuFolder", "MyLunii"),
 ]
 
 shortcut_table = [
     ("DesktopShortcut",        # Shortcut
      "DesktopFolder",          # Directory_
-     "Lunii Qt",               # Name that will be show on the link
+     "MyLunii",                # Name that will be show on the link
      "TARGETDIR",              # Component_
-     "[TARGETDIR]Lunii-Qt.exe",# Target exe to exexute
+     "[TARGETDIR]MyLunii.exe", # Target exe to exexute
      None,                     # Arguments
      None,                     # Description
      None,                     # Hotkey
@@ -27,9 +27,9 @@ shortcut_table = [
     ),
     ("StartupShortcut",        # Shortcut
      "StartMenuFolder",        # Directory_
-     "Lunii Qt",               # Name that will be show on the link
+     "MyLunii",                # Name that will be show on the link
      "TARGETDIR",              # Component_
-     "[TARGETDIR]Lunii-Qt.exe",# Target exe to exexute
+     "[TARGETDIR]MyLunii.exe", # Target exe to exexute
      None,                     # Arguments
      None,                     # Description
      None,                     # Hotkey
@@ -93,7 +93,7 @@ executables = [
     Executable(
         "lunii-qt.py",
         # icon="./res/lunii.ico",
-        target_name="Lunii-Qt",
+        target_name="MyLunii",
         base=base,
         # shortcut_name="Lunii QT",
         # shortcut_dir="DesktopFolder",
@@ -101,7 +101,7 @@ executables = [
 ]
 
 setup(
-    name="Lunii Qt",
+    name="MyLunii",
     version=APP_VERSION,
     description="A simple GUI to manage your Lunii/Flam storytellers",
     author="o.Daneel",

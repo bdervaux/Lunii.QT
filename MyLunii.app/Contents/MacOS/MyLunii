@@ -1,6 +1,6 @@
 #!/bin/bash
-# Lunii.QT launcher for macOS.
-# This .app sits next to the Lunii.QT source folder (lunii-qt.py, pkg/, ...).
+# MyLunii launcher for macOS.
+# This .app sits next to the MyLunii source folder (lunii-qt.py, pkg/, ...).
 # First launch: prepares a private Python environment (2-5 min, Internet needed).
 # Next launches: opens the application in a few seconds.
 
@@ -14,11 +14,11 @@ LOG="$APP_DIR/.lunii-launcher.log"
 export PATH="/Library/Frameworks/Python.framework/Versions/Current/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
 
 dialog() {
-  osascript -e "display dialog \"$1\" with title \"Lunii.QT\" buttons {\"OK\"} default button 1 with icon ${2:-note}" >/dev/null 2>&1
+  osascript -e "display dialog \"$1\" with title \"MyLunii\" buttons {\"OK\"} default button 1 with icon ${2:-note}" >/dev/null 2>&1
 }
 
 if [ ! -f "$APP_DIR/lunii-qt.py" ]; then
-  dialog "Gardez Lunii.QT.app dans son dossier d'origine (à côté du dossier « pkg »)." caution
+  dialog "Gardez MyLunii.app dans son dossier d'origine (à côté du dossier « pkg »)." caution
   exit 1
 fi
 
@@ -38,13 +38,13 @@ for candidate in python3.12 python3.11 python3.10 python3.13 python3; do
 done
 if [ -z "$PY" ]; then
   open "https://www.python.org/downloads/macos/"
-  dialog "Il manque Python sur ce Mac.\n\nLa page de téléchargement vient de s'ouvrir : installez Python 3.12, puis rouvrez Lunii.QT." caution
+  dialog "Il manque Python sur ce Mac.\n\nLa page de téléchargement vient de s'ouvrir : installez Python 3.12, puis rouvrez MyLunii." caution
   exit 1
 fi
 
 # 2. first launch: prepare everything
 if [ ! -f "$READY" ]; then
-  osascript -e 'display notification "Première ouverture : préparation en cours, cela peut prendre quelques minutes…" with title "Lunii.QT"' >/dev/null 2>&1
+  osascript -e 'display notification "Première ouverture : préparation en cours, cela peut prendre quelques minutes…" with title "MyLunii"' >/dev/null 2>&1
   {
     rm -rf "$VENV"
     "$PY" -m venv "$VENV" &&

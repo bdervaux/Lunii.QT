@@ -1,11 +1,11 @@
-LANCER LUNII.QT EN UN DOUBLE-CLIC
-=================================
+LANCER MYLUNII EN UN DOUBLE-CLIC
+================================
 
 Il faut juste Python sur l'ordinateur (gratuit) : https://www.python.org/downloads/
 Prenez la version 3.12. Sous Windows, cochez « Add python.exe to PATH » pendant l'installation.
 
 --- Sur Mac ---
-1. Double-cliquez sur « Lunii.QT.app ».
+1. Double-cliquez sur « MyLunii.app ».
 2. Si macOS refuse de l'ouvrir (« développeur non identifié ») :
    Réglages Système > Confidentialité et sécurité > tout en bas, cliquez « Ouvrir quand même ».
    (Une seule fois : macOS s'en souvient ensuite.)
@@ -13,7 +13,7 @@ Prenez la version 3.12. Sous Windows, cochez « Add python.exe to PATH » pendan
    Ensuite, l'application s'ouvre en quelques secondes.
 
 --- Sur Windows ---
-1. Double-cliquez sur « Lancer Lunii.QT (Windows).bat ».
+1. Double-cliquez sur « Lancer MyLunii (Windows).bat ».
 2. Si Windows affiche « Windows a protégé votre ordinateur » : cliquez « Informations
    complémentaires », puis « Exécuter quand même ».
 3. La toute première fois, une fenêtre noire montre la préparation (2 à 5 minutes, avec Internet).

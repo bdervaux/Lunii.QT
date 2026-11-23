@@ -1,7 +1,7 @@
 import os, shutil, subprocess
 import glob
 
-APP_PATH = "dist/luniiQt.app/Contents"
+APP_PATH = "dist/MyLunii.app/Contents"
 
 def remove(path):
     if os.path.exists(path):

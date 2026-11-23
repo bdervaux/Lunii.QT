@@ -1441,16 +1441,16 @@ Voulez-vous continuer ?</translation>
         <translation>Journal d'activité</translation>
     </message>
     <message>
-        <source>Technical details of everything Lunii.QT does. Useful when asking for help.</source>
-        <translation>Le détail technique de tout ce que fait Lunii.QT. Utile pour demander de l'aide.</translation>
+        <source>Technical details of everything MyLunii does. Useful when asking for help.</source>
+        <translation>Le détail technique de tout ce que fait MyLunii. Utile pour demander de l'aide.</translation>
     </message>
     <message>
         <source>Plug in your Lunii</source>
         <translation>Branchez votre Lunii</translation>
     </message>
     <message>
-        <source>Lunii.QT finds it on its own a few seconds after it is plugged in. It also works with the Flam.</source>
-        <translation>Lunii.QT la reconnaît toute seule quelques secondes après qu'elle est branchée. Ça marche aussi avec la Flam.</translation>
+        <source>MyLunii finds it on its own a few seconds after it is plugged in. It also works with the Flam.</source>
+        <translation>MyLunii la reconnaît toute seule quelques secondes après qu'elle est branchée. Ça marche aussi avec la Flam.</translation>
     </message>
     <message>
         <source>Plug the cable</source>
@@ -1675,12 +1675,12 @@ Voulez-vous continuer ?</translation>
         <translation>✓ Sur la Lunii</translation>
     </message>
     <message>
-        <source>About Lunii.QT</source>
-        <translation>À propos de Lunii.QT</translation>
+        <source>About MyLunii</source>
+        <translation>À propos de MyLunii</translation>
     </message>
     <message>
-        <source>&lt;h3&gt;Lunii.QT — by {0}&lt;/h3&gt;&lt;p&gt;A simple and friendly way to manage the stories of your Lunii and Flam, and to keep your own library on the computer.&lt;/p&gt;&lt;p&gt;New interface and library by &lt;b&gt;{0}&lt;/b&gt;.&lt;br&gt;Based on &lt;a href='https://github.com/o-daneel/Lunii.QT'&gt;Lunii.QT&lt;/a&gt; by o-daneel (GNU GPL v3).&lt;/p&gt;</source>
-        <translation>&lt;h3&gt;Lunii.QT — par {0}&lt;/h3&gt;&lt;p&gt;Une façon simple et sympa de gérer les histoires de votre Lunii et de votre Flam, et de garder votre propre bibliothèque sur l'ordinateur.&lt;/p&gt;&lt;p&gt;Nouvelle interface et bibliothèque par &lt;b&gt;{0}&lt;/b&gt;.&lt;br&gt;Basé sur &lt;a href='https://github.com/o-daneel/Lunii.QT'&gt;Lunii.QT&lt;/a&gt; d'o-daneel (GNU GPL v3).&lt;/p&gt;</translation>
+        <source>&lt;h3&gt;MyLunii — by {0}&lt;/h3&gt;&lt;p&gt;A simple and friendly way to manage the stories of your Lunii and Flam, and to keep your own library on the computer.&lt;/p&gt;&lt;p&gt;New interface and library by &lt;b&gt;{0}&lt;/b&gt;.&lt;br&gt;Based on &lt;a href='https://github.com/o-daneel/Lunii.QT'&gt;Lunii.QT&lt;/a&gt; by o-daneel (GNU GPL v3).&lt;/p&gt;</source>
+        <translation>&lt;h3&gt;MyLunii — par {0}&lt;/h3&gt;&lt;p&gt;Une façon simple et sympa de gérer les histoires de votre Lunii et de votre Flam, et de garder votre propre bibliothèque sur l'ordinateur.&lt;/p&gt;&lt;p&gt;Nouvelle interface et bibliothèque par &lt;b&gt;{0}&lt;/b&gt;.&lt;br&gt;Basé sur &lt;a href='https://github.com/o-daneel/Lunii.QT'&gt;Lunii.QT&lt;/a&gt; d'o-daneel (GNU GPL v3).&lt;/p&gt;</translation>
     </message>
     <message>
         <source>Adding {0} file(s) to your library...</source>

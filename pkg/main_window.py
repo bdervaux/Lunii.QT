@@ -34,7 +34,7 @@ from pkg.ui.modern_ui import Ui_ModernWindow as Ui_MainWindow
 from pkg.api.covers import CoverFetcher
 from pkg.library_view import LibraryView, ROLE_UUID
 from pkg.api.library import Library, DEFAULT_LIBRARY_DIR, is_supported
-from pkg.ui.modern_ui import SIGNATURE, logo_icon
+from pkg.ui.modern_ui import APP_NAME, SIGNATURE, logo_icon
 
 
 class LibraryScanWorker(QThread):
@@ -157,7 +157,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     # update ui elements state (enable, disable, context enu)
     def modify_widgets(self):
-        title = f"Lunii.QT {APP_VERSION} — {self.tr('by {0}').format(SIGNATURE)}"
+        title = f"{APP_NAME} {APP_VERSION} — {self.tr('by {0}').format(SIGNATURE)}"
         self.setWindowTitle(title)
         self.logger.log(logging.INFO, title)
 
@@ -667,8 +667,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     # LOCAL LIBRARY
     def cb_about(self):
         QMessageBox.about(
-            self, self.tr("About Lunii.QT"),
-            self.tr("<h3>Lunii.QT — by {0}</h3>"
+            self, self.tr("About MyLunii"),
+            self.tr("<h3>MyLunii — by {0}</h3>"
                     "<p>A simple and friendly way to manage the stories of your Lunii and Flam, "
                     "and to keep your own library on the computer.</p>"
                     "<p>New interface and library by <b>{0}</b>.<br>"

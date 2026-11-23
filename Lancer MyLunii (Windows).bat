@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-rem Double-cliquez sur ce fichier pour lancer Lunii.QT sous Windows.
+rem Double-cliquez sur ce fichier pour lancer MyLunii sous Windows.
 rem La premiere fois, il prepare tout (2 a 5 minutes, connexion Internet necessaire).
 rem Ensuite, l'application s'ouvre en quelques secondes.
 
@@ -31,7 +31,7 @@ if not defined PY (
 
 rem 2. Premiere fois : preparer l'environnement
 if not exist "%READY%" (
-  echo Preparation de Lunii.QT - premiere fois uniquement...
+  echo Preparation de MyLunii - premiere fois uniquement...
   if exist "%VENV%" rmdir /s /q "%VENV%"
   %PY% -m venv "%VENV%" || goto :error
   "%VENV%\Scripts\python.exe" -m pip install --upgrade pip >nul

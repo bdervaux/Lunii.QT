@@ -82,6 +82,7 @@ def svg_icon(name: str, color: str = "#3B3760", size: int = 22, stroke: float = 
 
 
 # --------------------------------------------------------------------------- illustrations
+APP_NAME = "MyLunii"
 SIGNATURE = "dervø"
 
 # friendly crescent moon on an indigo tile (app logo)
@@ -451,7 +452,7 @@ class Ui_ModernWindow(_ClassicUi):
         brand.addWidget(logo)
         names = QVBoxLayout()
         names.setSpacing(0)
-        names.addWidget(_label("Lunii.QT", "brand"))
+        names.addWidget(_label(APP_NAME, "brand"))
         self.lbl_signature = _label("", "signature")
         names.addWidget(self.lbl_signature)
         brand.addLayout(names)
@@ -820,7 +821,7 @@ class Ui_ModernWindow(_ClassicUi):
                                    self.btn_get_fw))
         self.btn_show_log = _button(QCoreApplication.translate("MainWindow", "Show"), "secondary", "log")
         lay.addWidget(_action_card("log", QCoreApplication.translate("MainWindow", "Activity log"),
-                                   QCoreApplication.translate("MainWindow", "Technical details of everything Lunii.QT does. Useful when asking for help."),
+                                   QCoreApplication.translate("MainWindow", "Technical details of everything MyLunii does. Useful when asking for help."),
                                    self.btn_show_log))
         lay.addStretch(1)
         return page
@@ -855,7 +856,7 @@ class Ui_ModernWindow(_ClassicUi):
         title = _label(QCoreApplication.translate("MainWindow", "Plug in your Lunii"), "h1")
         title.setAlignment(Qt.AlignCenter)
         lay.addWidget(title)
-        sub = _label(QCoreApplication.translate("MainWindow", "Lunii.QT finds it on its own a few seconds after it is plugged in. It also works with the Flam."), "muted", wrap=True)
+        sub = _label(QCoreApplication.translate("MainWindow", "MyLunii finds it on its own a few seconds after it is plugged in. It also works with the Flam."), "muted", wrap=True)
         sub.setAlignment(Qt.AlignCenter)
         sub.setFixedWidth(560)
         lay.addLayout(_centered(sub))

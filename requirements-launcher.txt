@@ -1,4 +1,4 @@
-# Used by "Lancer Lunii.QT" (Mac / Windows): same libraries as requirements.txt,
+# Used by "Lancer MyLunii" (Mac / Windows): same libraries as requirements.txt,
 # with slightly looser versions so recent Python versions also find ready-made packages.
 PySide6-Essentials>=6.7.3,<7
 psutil>=7.0
