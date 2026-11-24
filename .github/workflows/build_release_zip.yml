@@ -1,0 +1,108 @@
+name: Build MyLunii zips (Windows exe + Mac app + global)
+
+on:
+  push:
+    branches:
+      - nouvelle-interface
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install cx_freeze
+    - name: Generate UI, translations and resources
+      run: |
+        pyside6-uic ./pkg/ui/main.ui -o ./pkg/ui/main_ui.py
+        pyside6-uic ./pkg/ui/nm.ui   -o ./pkg/ui/nm_ui.py
+        pyside6-lupdate ./pkg/ui/main.ui ./pkg/ui/nm.ui ./pkg/ui/about_ui.py ./pkg/ui/debug_ui.py ./pkg/ui/login_ui.py ./pkg/nm_window.py ./pkg/main_window.py ./pkg/ierWorker.py ./pkg/versionWorker.py ./pkg/api/devices.py ./pkg/api/device_flam.py ./pkg/api/device_lunii.py ./pkg/ui/modern_ui.py ./pkg/library_view.py -ts ./locales/fr_FR.ts
+        pyside6-lrelease ./locales/fr_FR.ts ./locales/fr_FR.qm
+        pyside6-rcc ./resources.qrc -o ./resources_rc.py
+    - name: Build MyLunii.exe (cx_Freeze)
+      run: python setup.py build_exe
+    - name: Set exe icon
+      run: tools\rcedit-x64.exe build\exe.win-amd64-3.11\MyLunii.exe --set-icon res\mylunii.ico
+    - name: Self-test (the exe opens its window and every page)
+      run: |
+        $env:MYLUNII_SELFTEST = "$PWD\selftest.txt"
+        $p = Start-Process -FilePath "build\exe.win-amd64-3.11\MyLunii.exe" -PassThru
+        if (-not $p.WaitForExit(180000)) { $p.Kill(); throw "MyLunii.exe did not finish in time" }
+        if (-not (Test-Path selftest.txt)) { throw "MyLunii.exe wrote no self-test result (exit code $($p.ExitCode))" }
+        Get-Content selftest.txt
+        if (-not (Select-String -Path selftest.txt -Pattern '^ok' -Quiet)) { throw "Self-test failed" }
+    - name: Assemble MyLunii-Windows.zip
+      run: |
+        $kit = "kit\MyLunii-Windows"
+        New-Item -ItemType Directory -Path $kit -Force | Out-Null
+        Copy-Item -Path "build\exe.win-amd64-3.11" -Destination "$kit\MyLunii" -Recurse
+        Copy-Item -Path "tools\windows\*" -Destination $kit
+        Push-Location kit
+        7z a -tzip -mx=7 ..\MyLunii-Windows.zip MyLunii-Windows | Out-Null
+        Pop-Location
+        Get-Item MyLunii-Windows.zip | Select-Object Name, Length
+    - uses: actions/upload-artifact@v4
+      with:
+        name: MyLunii-Windows
+        path: MyLunii-Windows.zip
+
+  mac:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Install Qt tools
+      run: pip install "PySide6-Essentials~=6.7.3"
+    - name: Update translations
+      run: |
+        pyside6-lupdate ./pkg/ui/main.ui ./pkg/ui/nm.ui ./pkg/ui/about_ui.py ./pkg/ui/debug_ui.py ./pkg/ui/login_ui.py ./pkg/nm_window.py ./pkg/main_window.py ./pkg/ierWorker.py ./pkg/versionWorker.py ./pkg/api/devices.py ./pkg/api/device_flam.py ./pkg/api/device_lunii.py ./pkg/ui/modern_ui.py ./pkg/library_view.py -ts ./locales/fr_FR.ts
+    - name: Build MyLunii-Mac.zip
+      run: bash tools/mac/build_mac_zip.sh
+    - uses: actions/upload-artifact@v4
+      with:
+        name: MyLunii-Mac
+        path: dist/MyLunii-Mac.zip
+
+  bundle:
+    needs: [windows, mac]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/download-artifact@v4
+      with:
+        path: in
+    - name: Assemble MyLunii-Mac-Windows.zip
+      run: |
+        mkdir -p out/MyLunii work
+        unzip -q in/MyLunii-Mac/MyLunii-Mac.zip -d work
+        unzip -q in/MyLunii-Windows/MyLunii-Windows.zip -d work
+        mv work/MyLunii-Mac out/MyLunii/Mac
+        mv work/MyLunii-Windows out/MyLunii/Windows
+        cp tools/LISEZ-MOI-global.txt out/MyLunii/LISEZ-MOI.txt
+        chmod +x out/MyLunii/Mac/MyLunii.app/Contents/MacOS/MyLunii "out/MyLunii/Mac/Installer MyLunii.command" out/MyLunii/Mac/installer-mylunii.sh
+        (cd out && zip -qry ../MyLunii-Mac-Windows.zip MyLunii)
+        cp in/MyLunii-Mac/MyLunii-Mac.zip in/MyLunii-Windows/MyLunii-Windows.zip .
+        ls -la *.zip
+    - uses: actions/upload-artifact@v4
+      with:
+        name: MyLunii-Mac-Windows
+        path: MyLunii-Mac-Windows.zip
+    - name: Release (tags only)
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        draft: true
+        files: |
+          MyLunii-Mac-Windows.zip
+          MyLunii-Mac.zip
+          MyLunii-Windows.zip

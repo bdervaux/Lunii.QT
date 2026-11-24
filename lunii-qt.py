@@ -35,6 +35,35 @@ if __name__ == "__main__":
         if language.lower().startswith("en"):
             break
 
+    # MYLUNII_SELFTEST=<file>: build checks (opens the window, writes "ok" or the error, quits)
+    selftest = os.environ.get("MYLUNII_SELFTEST")
+    if selftest:
+        import traceback
+        from PySide6.QtCore import QTimer
+
+        def report(text):
+            with open(selftest, "w", encoding="utf-8") as fp:
+                fp.write(text)
+
+        def hook(exc_type, exc, tb):
+            report("ERROR\n" + "".join(traceback.format_exception(exc_type, exc, tb)))
+            os._exit(1)
+        sys.excepthook = hook
+        try:
+            window = MainWindow(app)
+            window.show()
+            for page in ("library", "add", "order", "repair", "stories"):
+                window.show_page(page)
+        except Exception:
+            hook(*sys.exc_info())
+
+        def finish():
+            report(f"ok\npages={len(window.pages_by_name)}\ntitle={window.windowTitle()}\n")
+            window.close()
+            app.quit()
+        QTimer.singleShot(6000, finish)
+        sys.exit(app.exec())
+
     window = MainWindow(app)
     window.show()
 

@@ -1,0 +1,41 @@
+﻿MYLUNII POUR WINDOWS — par dervø
+================================
+
+Ce dossier contient :
+  • MyLunii\MyLunii.exe ........ l'application (Python est déjà inclus, rien d'autre à installer)
+  • Installer MyLunii.bat ....... installe MyLunii et crée les raccourcis (double-clic)
+  • installer-mylunii.ps1 ....... le même installateur, pour PowerShell
+  • Desinstaller MyLunii.bat .... retire MyLunii (votre bibliothèque d'histoires est conservée)
+
+AVANT TOUT : décompressez le zip
+  Clic droit sur le zip > « Extraire tout… ». (Ne lancez rien depuis l'intérieur du zip.)
+
+INSTALLATION (une seule fois)
+-----------------------------
+Méthode 1 — double-clic
+  Double-cliquez sur « Installer MyLunii.bat ».
+  Si Windows affiche « Windows a protégé votre ordinateur » :
+  cliquez « Informations complémentaires », puis « Exécuter quand même ».
+
+Méthode 2 — PowerShell
+  1. Ouvrez le dossier décompressé, cliquez dans la barre d'adresse, tapez  powershell  puis Entrée.
+  2. Tapez :  powershell -ExecutionPolicy Bypass -File .\installer-mylunii.ps1
+  3. Appuyez sur Entrée.
+
+L'installateur :
+  – débloque les fichiers téléchargés,
+  – copie MyLunii dans  %LOCALAPPDATA%\Programs\MyLunii  (aucun mot de passe administrateur),
+  – crée les raccourcis « MyLunii » sur le Bureau et dans le menu Démarrer,
+  – ouvre MyLunii.
+
+SANS INSTALLATION
+-----------------
+Vous pouvez aussi lancer directement  MyLunii\MyLunii.exe  (par exemple depuis une clé USB).
+
+ENSUITE
+-------
+Ouvrez MyLunii depuis le Bureau ou le menu Démarrer.
+Pour mettre à jour : décompressez la nouvelle version et relancez « Installer MyLunii.bat ».
+
+Ajouter des histoires d'autres formats (pas MP3) demande FFmpeg : MyLunii propose
+de l'installer en un clic (page « Ajouter »).

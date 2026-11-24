@@ -1,0 +1,24 @@
+﻿MYLUNII — par dervø
+===================
+
+Gérez les histoires de votre Lunii (et de votre Flam) et gardez votre propre
+bibliothèque d'histoires sur l'ordinateur, même sans Lunii branchée.
+
+Choisissez le dossier de votre ordinateur :
+
+  Mac/        MyLunii.app + « Installer MyLunii.command » + installer-mylunii.sh
+              → ouvrez Mac/LISEZ-MOI.txt
+              En bref : double-clic sur « Installer MyLunii.command »
+              (ou dans le Terminal : bash, une espace, glissez installer-mylunii.sh, Entrée).
+
+  Windows/    MyLunii\MyLunii.exe + « Installer MyLunii.bat » + installer-mylunii.ps1
+              → ouvrez Windows/LISEZ-MOI.txt
+              En bref : décompressez tout, puis double-clic sur « Installer MyLunii.bat ».
+              Rien d'autre à installer : Python est déjà inclus dans MyLunii.exe.
+
+L'application n'est pas signée par Apple ni Microsoft : à la première ouverture,
+votre ordinateur peut demander une confirmation (« Ouvrir quand même » sur Mac,
+« Informations complémentaires > Exécuter quand même » sur Windows).
+
+Basé sur Lunii.QT d'o-daneel (https://github.com/o-daneel/Lunii.QT), licence GNU GPL v3.
+Le code source de MyLunii : https://github.com/bdervaux/Lunii.QT (branche nouvelle-interface).
