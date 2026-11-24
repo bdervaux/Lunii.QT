@@ -99,13 +99,15 @@ jobs:
       with:
         name: MyLunii-Mac-Windows
         path: MyLunii-Mac-Windows.zip
-    - name: Release (tags only)
+    - name: Release (tags, or a commit containing [publier])
       uses: softprops/action-gh-release@v2
-      if: startsWith(github.ref, 'refs/tags/')
+      if: startsWith(github.ref, 'refs/tags/') || contains(github.event.head_commit.message, '[publier]')
       with:
+        tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'mylunii-v3.1.4' }}
+        target_commitish: ${{ github.sha }}
         draft: false
         make_latest: true
-        name: MyLunii ${{ github.ref_name }}
+        name: MyLunii 3.1.4
         body: |
           MyLunii pour Mac et Windows, par dervø.
           - MyLunii-Mac.zip : version Mac (ouvrez le zip, double-cliquez sur « Installer MyLunii.command »)
